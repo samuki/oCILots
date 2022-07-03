@@ -1,6 +1,6 @@
-import glob
+from glob import glob
 import re
-from tkinter import Image
+from PIL import Image
 from matplotlib import pyplot as plt
 import numpy as np
 import torch

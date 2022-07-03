@@ -1,3 +1,9 @@
+# data
+cil-road-segmentation-2022*
+__MACOSX
+tensorboard
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

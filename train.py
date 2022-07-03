@@ -2,10 +2,8 @@ from matplotlib import pyplot as plt
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-import tqdm
-from config import CUTOFF, PATCH_SIZE
-
-from utils import create_submission, load_all_from_path, np_to_tensor, show_val_samples
+from tqdm.notebook import tqdm
+from utils import  show_val_samples
 
 
 def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs):
