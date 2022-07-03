@@ -13,8 +13,8 @@ def main():
     path = 'cil-road-segmentation-2022/'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # reshape the image to simplify the handling of skip connections and maxpooling
-    train_dataset = ImageDataset(path+'training', device, use_patches=False, resize_to=(384, 384))
-    val_dataset = ImageDataset(path+'validation', device, use_patches=False, resize_to=(384, 384))
+    train_dataset = ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
+    val_dataset = ImageDataset('validation', device, use_patches=False, resize_to=(384, 384))
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=4, shuffle=True)
     model = UNet().to(device)
@@ -23,7 +23,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
     n_epochs = 35
     train(train_dataloader, val_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs)
-    test_path = path+'test/images'
+    test_path = 'test/images'
     # predict on test set
     test_filenames = (glob(test_path + '/*.png'))
     test_images = load_all_from_path(test_path)
