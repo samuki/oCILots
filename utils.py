@@ -4,8 +4,16 @@ from PIL import Image
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
+import os 
+import config
+import shutil
 
-from config import CUTOFF, PATCH_SIZE
+
+def make_log_dir(dt):
+    os.makedirs(dt)
+    shutil.copyfile('config.py', dt+"/config.py")
+    
+
 
 def load_all_from_path(path):
     # loads all HxW .pngs contained in path as a 4D np.array of shape (n_images, H, W, 3)
@@ -58,10 +66,10 @@ def show_val_samples(x, y, y_hat, segmentation=False):
 
 def patch_accuracy_fn(y_hat, y):
     # computes accuracy weighted by patches (metric used on Kaggle for evaluation)
-    h_patches = y.shape[-2] // PATCH_SIZE
-    w_patches = y.shape[-1] // PATCH_SIZE
-    patches_hat = y_hat.reshape(-1, 1, h_patches, PATCH_SIZE, w_patches, PATCH_SIZE).mean((-1, -3)) > CUTOFF
-    patches = y.reshape(-1, 1, h_patches, PATCH_SIZE, w_patches, PATCH_SIZE).mean((-1, -3)) > CUTOFF
+    h_patches = y.shape[-2] // config.PATCH_SIZE
+    w_patches = y.shape[-1] // config.PATCH_SIZE
+    patches_hat = y_hat.reshape(-1, 1, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE).mean((-1, -3)) > config.CUTOFF
+    patches = y.reshape(-1, 1, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE).mean((-1, -3)) > config.CUTOFF
     return (patches == patches_hat).float().mean()
 
 def image_to_patches(images, masks=None):
@@ -69,22 +77,21 @@ def image_to_patches(images, masks=None):
     # returns a 4D np.array with an ordered sequence of patches extracted from the image and (optionally) a np.array containing labels
     n_images = images.shape[0]  # number of images
     h, w = images.shape[1:3]  # shape of images
-    assert (h % PATCH_SIZE) + (w % PATCH_SIZE) == 0  # make sure images can be patched exactly
+    assert (h % config.PATCH_SIZE) + (w % config.PATCH_SIZE) == 0  # make sure images can be patched exactly
 
     images = images[:,:,:,:3]
     
-    h_patches = h // PATCH_SIZE
-    w_patches = w // PATCH_SIZE
-    
-    patches = images.reshape((n_images, h_patches, PATCH_SIZE, w_patches, PATCH_SIZE, -1))
+    h_patches = h // config.PATCH_SIZE
+    w_patches = w // config.PATCH_SIZE
+    patches = images.reshape((n_images, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE, -1))
     patches = np.moveaxis(patches, 2, 3)
-    patches = patches.reshape(-1, PATCH_SIZE, PATCH_SIZE, 3)
+    patches = patches.reshape(-1, config.PATCH_SIZE, config.PATCH_SIZE, 3)
     if masks is None:
         return patches
 
-    masks = masks.reshape((n_images, h_patches, PATCH_SIZE, w_patches, PATCH_SIZE, -1))
+    masks = masks.reshape((n_images, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE, -1))
     masks = np.moveaxis(masks, 2, 3)
-    labels = np.mean(masks, (-1, -2, -3)) > CUTOFF  # compute labels
+    labels = np.mean(masks, (-1, -2, -3)) > config.CUTOFF  # compute labels
     labels = labels.reshape(-1).astype(np.float32)
     return patches, labels
 
@@ -107,7 +114,7 @@ def create_submission(labels, test_filenames, submission_filename):
             img_number = int(re.search(r"\d+", fn).group(0))
             for i in range(patch_array.shape[0]):
                 for j in range(patch_array.shape[1]):
-                    f.write("{:03d}_{}_{},{}\n".format(img_number, j*PATCH_SIZE, i*PATCH_SIZE, int(patch_array[i, j])))
+                    f.write("{:03d}_{}_{},{}\n".format(img_number, j*config.PATCH_SIZE, i*config.PATCH_SIZE, int(patch_array[i, j])))
                     
 def accuracy_fn(y_hat, y):
     # computes classification accuracy

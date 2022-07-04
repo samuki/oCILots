@@ -6,9 +6,14 @@ import config
 from train import train
 from unet import UNet
 import utils
-import dataset 
+import dataset
+import datetime 
 
 def main():
+    # log training
+    now = datetime.datetime.now()
+    dt_string = now.strftime("%d%m%Y_%H:%M:%S")
+    utils.make_log_dir(dt_string)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # reshape the image to simplify the handling of skip connections and maxpooling
     #train_dataset = ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
@@ -50,6 +55,8 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
     n_epochs = config.EPOCHS
     train(train_dataloader, val_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs)
+    torch.save(model.state_dict(), dt_string+"/model.pth")
+
     test_path = 'test/images'
     # predict on test set
     test_filenames = (glob(test_path + '/*.png'))
@@ -67,7 +74,7 @@ def main():
     test_pred = test_pred.reshape((-1, size[0] // config.PATCH_SIZE, config.PATCH_SIZE, size[0] // config.PATCH_SIZE, config.PATCH_SIZE))
     test_pred = np.moveaxis(test_pred, 2, 3)
     test_pred = np.round(np.mean(test_pred, (-1, -2)) > config.CUTOFF)
-    utils.create_submission(test_pred, test_filenames, submission_filename='unet_submission.csv')
+    utils.create_submission(test_pred, test_filenames, submission_filename=dt_string+'/submission.csv')
     
     
     
