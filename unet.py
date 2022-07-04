@@ -12,14 +12,17 @@ class Block(nn.Module):
                                    nn.ReLU(),
                                    nn.BatchNorm2d(out_ch),
                                    nn.Conv2d(in_channels=out_ch, out_channels=out_ch, kernel_size=3, padding=1),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=out_ch, out_channels=out_ch, kernel_size=3, padding=1),
                                    nn.ReLU())
+
 
     def forward(self, x):
         return self.block(x)
         
 class UNet(nn.Module):
     # UNet-like architecture for single class semantic segmentation.
-    def __init__(self, chs=(3,64,128,256,512,1024)):
+    def __init__(self, chs=(3,64,128,256,512,1024,2048)):
         super().__init__()
         enc_chs = chs  # number of channels in the encoder
         dec_chs = chs[::-1][:-1]  # number of channels in the decoder

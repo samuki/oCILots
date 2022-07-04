@@ -21,7 +21,7 @@ def main():
     loss_fn = torch.nn.BCELoss()
     metric_fns = {'acc': accuracy_fn, 'patch_acc': patch_accuracy_fn}
     optimizer = torch.optim.Adam(model.parameters())
-    n_epochs = 35
+    n_epochs = 10
     train(train_dataloader, val_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs)
     test_path = 'test/images'
     # predict on test set
