@@ -1,7 +1,6 @@
 from matplotlib import pyplot as plt
 import torch
 from torch.utils.tensorboard import SummaryWriter
-
 from tqdm.notebook import tqdm
 from utils import  show_val_samples
 
@@ -12,7 +11,6 @@ def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimiz
     writer = SummaryWriter(logdir)  # tensorboard writer (can also log images)
 
     history = {}  # collects metrics at the end of each epoch
-
     for epoch in range(n_epochs):  # loop over the dataset multiple times
 
         # initialize metric list
@@ -26,8 +24,8 @@ def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimiz
         model.train()
         for (x, y) in pbar:
             optimizer.zero_grad()  # zero out gradients
-            y_hat = model(x)  # forward pass
-            loss = loss_fn(y_hat, y)
+            y_hat = torch.squeeze(model(x))  # forward pass
+            loss = loss_fn(y_hat,y)
             loss.backward()  # backward pass
             optimizer.step()  # optimize weights
 
