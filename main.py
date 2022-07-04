@@ -3,18 +3,47 @@ import cv2
 import numpy as np
 import torch
 from config import CUTOFF, PATCH_SIZE
-from dataset import ImageDataset
 from train import train
 from unet import UNet
 from utils import accuracy_fn, create_submission, load_all_from_path, np_to_tensor, patch_accuracy_fn
-
+import dataset 
 
 def main():
-    path = 'cil-road-segmentation-2022/'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # reshape the image to simplify the handling of skip connections and maxpooling
-    train_dataset = ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
-    val_dataset = ImageDataset('validation', device, use_patches=False, resize_to=(384, 384))
+    #train_dataset = ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
+    #val_dataset = ImageDataset('validation', device, use_patches=False, resize_to=(384, 384))
+    
+    # TODO try using two classes
+    #class_names = ['background', 'street']
+    class_names = ['street']
+    #select_classes = ['background', 'street']
+    select_classes = ['street']
+    #class_rgb_values = [[0, 0, 0], [255, 255, 255]]
+    class_rgb_values = [[255, 255, 255]]
+    # Get RGB values of required classes
+    select_class_indices = [class_names.index(cls.lower()) for cls in select_classes]
+    select_class_rgb_values =  np.array(class_rgb_values)[select_class_indices]
+    train_dataset = dataset.FlexibleDataset(
+        'training', 
+        device,
+        use_patches=False,
+        resize_to=(384, 384),
+        augmentation=dataset._training_augmentation(),
+        preprocessing=dataset._flexible_preprocess(),
+        select_class_rgb_values=select_class_rgb_values
+    )
+
+    val_dataset = dataset.FlexibleDataset(
+        'validation', 
+        device,
+        use_patches=False,
+        resize_to=(384, 384),
+        augmentation=dataset._training_augmentation(), 
+        preprocessing=dataset._flexible_preprocess(),
+        select_class_rgb_values=select_class_rgb_values
+    )
+    image, mask = train_dataset[1]
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=4, shuffle=True)
     model = UNet().to(device)
@@ -46,5 +75,4 @@ def main():
     
     
 if __name__ == "__main__":
-    print("hi")
     main()
