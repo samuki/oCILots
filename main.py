@@ -39,13 +39,13 @@ def main():
         device,
         use_patches=False,
         resize_to=(384, 384),
-        augmentation=dataset._training_augmentation(), 
+        augmentation=dataset._validation_augmentation(), 
         preprocessing=dataset._flexible_preprocess(),
         select_class_rgb_values=select_class_rgb_values
     )
     image, mask = train_dataset[1]
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=4, shuffle=True)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=2, shuffle=True)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=2, shuffle=True)
     model = UNet().to(device)
     loss_fn = torch.nn.BCELoss()
     metric_fns = {'acc': accuracy_fn, 'patch_acc': patch_accuracy_fn}

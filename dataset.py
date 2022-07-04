@@ -35,7 +35,7 @@ class FlexibleDataset(torch.utils.data.Dataset):
         if self.preprocessing:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
-        return utils.np_to_tensor(image, self.device), utils.np_to_tensor(mask, self.device)
+        return torch.squeeze(utils.np_to_tensor(image, self.device)), torch.squeeze(utils.np_to_tensor(mask, self.device))
     
     
     def __len__(self):

@@ -23,6 +23,7 @@ def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimiz
         # training
         model.train()
         for (x, y) in pbar:
+            y = torch.squeeze(y)
             optimizer.zero_grad()  # zero out gradients
             y_hat = torch.squeeze(model(x))  # forward pass
             loss = loss_fn(y_hat,y)
@@ -39,6 +40,7 @@ def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimiz
         model.eval()
         with torch.no_grad():  # do not keep track of gradients
             for (x, y) in eval_dataloader:
+                y = torch.squeeze(y)
                 y_hat = model(x)  # forward pass
                 loss = loss_fn(y_hat, y)
                 
