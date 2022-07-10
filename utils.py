@@ -115,7 +115,26 @@ def create_submission(labels, test_filenames, submission_filename):
             for i in range(patch_array.shape[0]):
                 for j in range(patch_array.shape[1]):
                     f.write("{:03d}_{}_{},{}\n".format(img_number, j*config.PATCH_SIZE, i*config.PATCH_SIZE, int(patch_array[i, j])))
+    
                     
 def accuracy_fn(y_hat, y):
     # computes classification accuracy
     return (y_hat.round() == y.round()).float().mean()
+
+
+def visualize(**images):
+    """
+    Plot images in one row
+    """
+    n_images = len(images)
+    plt.figure(figsize=(20,8))
+    for idx, (name, image) in enumerate(images.items()):
+        plt.subplot(1, n_images, idx + 1)
+        plt.xticks([]); 
+        plt.yticks([])
+        # get title from the parameter names
+        plt.title(name.replace('_',' ').title(), fontsize=20)
+        if image.shape[0] != config.WIDTH:
+            image = image.T
+        plt.imshow(image)
+    plt.show()

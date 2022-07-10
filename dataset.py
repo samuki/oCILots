@@ -31,11 +31,8 @@ class FlexibleDataset(torch.utils.data.Dataset):
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
-        # apply preprocessing
-        if self.preprocessing:
-            sample = self.preprocessing(image=image, mask=mask)
-            image, mask = sample['image'], sample['mask']
-        return torch.squeeze(utils.np_to_tensor(image, self.device)), torch.squeeze(utils.np_to_tensor(mask, self.device))
+        image = image.T
+        return torch.squeeze(utils.np_to_tensor(image.T, self.device)), torch.squeeze(utils.np_to_tensor(mask, self.device))
     
     
     def __len__(self):
@@ -120,7 +117,7 @@ def to_tensor(x, **kwargs):
     return x
 
 def flexible_to_tensor(x, **kwargs):
-    return np.squeeze(x.astype('float32').transpose(2, 0, 1))
+    return np.moveaxis(x, -1, 0).astype('float32')
 
 
 # Perform one hot encoding on label
