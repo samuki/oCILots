@@ -42,8 +42,8 @@ def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimiz
             for (x, y) in eval_dataloader:
                 y = torch.squeeze(y)
                 y_hat = model(x)  # forward pass
+                y_hat = torch.squeeze(y_hat)
                 loss = loss_fn(y_hat, y)
-                
                 # log partial metrics
                 metrics['val_loss'].append(loss.item())
                 for k, fn in metric_fns.items():

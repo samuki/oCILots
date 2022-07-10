@@ -44,15 +44,12 @@ class FlexibleDataset(torch.utils.data.Dataset):
 class ImageDataset(torch.utils.data.Dataset):
     # dataset class that deals with loading the data and making it available by index.
 
-    def __init__(self, path, device, use_patches=True, resize_to=(400, 400), augmentation=None, preprocessing=None, select_class_rgb_values=None):
+    def __init__(self, path, device, use_patches=True, resize_to=(400, 400)):
         self.path = path
         self.device = device
         self.use_patches = use_patches
         self.resize_to=resize_to
         self.x, self.y, self.n_samples = None, None, None
-        self.augmentation = augmentation
-        self.preprocessing = preprocessing
-        self.class_rgb_values=select_class_rgb_values
         self._load_data()
         
         
@@ -67,17 +64,11 @@ class ImageDataset(torch.utils.data.Dataset):
         self.x = np.moveaxis(self.x, -1, 1)  # pytorch works with CHW format instead of HWC
         self.n_samples = len(self.x)
 
+
     
     def __getitem__(self, item):
         image = self.x[item]
         mask = self.y[item]
-        if self.augmentation:
-            sample = self.augmentation(image=image, mask=mask)
-            image, mask = sample['image'], sample['mask']
-        # apply preprocessing
-        if self.preprocessing:
-            sample = self.preprocessing(image=image, mask=mask)
-            image, mask = sample['image'], sample['mask']
         return utils.np_to_tensor(image, self.device), utils.np_to_tensor(mask, self.device)
     
     def __len__(self):

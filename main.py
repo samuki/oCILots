@@ -16,8 +16,6 @@ def main():
     utils.make_log_dir(dt_string)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # reshape the image to simplify the handling of skip connections and maxpooling
-    #train_dataset = ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
-    #val_dataset = ImageDataset('validation', device, use_patches=False, resize_to=(384, 384))
     # TODO try using two classes
     #class_names = ['background', 'street']
     class_names = ['street']
@@ -28,27 +26,30 @@ def main():
     # Get RGB values of required classes
     select_class_indices = [class_names.index(cls.lower()) for cls in select_classes]
     select_class_rgb_values =  np.array(class_rgb_values)[select_class_indices]
-    train_dataset = dataset.FlexibleDataset(
-        'training', 
-        device,
-        use_patches=False,
-        resize_to=(config.HEIGHT, config.WIDTH),
-        augmentation=dataset._training_augmentation(),
-        preprocessing=dataset._flexible_preprocess(),
-        select_class_rgb_values=select_class_rgb_values
-    )
-
-    val_dataset = dataset.FlexibleDataset(
-        'validation', 
-        device,
-        use_patches=False,
-        resize_to=(config.HEIGHT, config.WIDTH),
-        augmentation=dataset._validation_augmentation(), 
-        preprocessing=dataset._flexible_preprocess(),
-        select_class_rgb_values=select_class_rgb_values
-    )
+    if config.USE_AUGMENTATIONS:
+        train_dataset = dataset.FlexibleDataset(
+            'training', 
+            device,
+            use_patches=False,
+            resize_to=(config.HEIGHT, config.WIDTH),
+            augmentation=dataset._training_augmentation(),
+            preprocessing=dataset._flexible_preprocess(),
+            select_class_rgb_values=select_class_rgb_values
+        )
+        val_dataset = dataset.FlexibleDataset(
+            'validation', 
+            device,
+            use_patches=False,
+            resize_to=(config.HEIGHT, config.WIDTH),
+            augmentation=dataset._training_augmentation(), 
+            preprocessing=dataset._flexible_preprocess(),
+            select_class_rgb_values=select_class_rgb_values
+        )
+    else:
+        train_dataset = dataset.ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
+        val_dataset = dataset.ImageDataset('validation', device, use_patches=False, resize_to=(384, 384))
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=2, shuffle=True)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
     model = UNet().to(device)
     loss_fn = config.LOSS
     metric_fns = config.METRICS
