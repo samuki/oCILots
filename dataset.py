@@ -9,30 +9,27 @@ import albumentations as album
 
 class FlexibleDataset(torch.utils.data.Dataset):
     # dataset to load images of varying sizes
-    def __init__(self, path, device, use_patches=True, resize_to=(400, 400), augmentation=None, preprocessing=None, select_class_rgb_values=None):
+    def __init__(self, path, device, use_patches=True, resize_to=(400, 400), augmentation=None):
         self.path = path
         self.device = device
         self.use_patches = use_patches
         self.resize_to=resize_to
-        self.augmentation = augmentation
-        self.preprocessing = preprocessing
-        self.class_rgb_values=select_class_rgb_values        
+        self.augmentation = augmentation    
         self.x = [os.path.join(self.path, 'images', image_id) for image_id in sorted(os.listdir(os.path.join(self.path, 'images')))]
         self.y = [os.path.join(self.path, 'groundtruth', image_id) for image_id in sorted(os.listdir(os.path.join(self.path, 'groundtruth')))]
         self.n_samples = len(self.x)
         
         
     def __getitem__(self, item):
-        image = cv2.cvtColor(cv2.imread(self.x[item]), cv2.COLOR_BGR2RGB)
-        mask = cv2.cvtColor(cv2.imread(self.y[item]), cv2.COLOR_BGR2RGB)
-        mask = one_hot_encode(mask, self.class_rgb_values).astype('float')
+        image = utils.load_from_path(self.x[item])[:,:,:3]
+        mask = utils.load_from_path(self.y[item])
         if self.use_patches:  # split each image into patches
             image, mask = utils.image_to_patches(image, mask)
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
-        image = image.T
-        return torch.squeeze(utils.np_to_tensor(image.T, self.device)), torch.squeeze(utils.np_to_tensor(mask, self.device))
+        return utils.np_to_tensor(np.moveaxis(image, -1, 0).astype('float32'), self.device), \
+            utils.np_to_tensor(np.moveaxis(mask, -1, 0).astype('float32'), self.device)
     
     
     def __len__(self):
@@ -70,26 +67,6 @@ class ImageDataset(torch.utils.data.Dataset):
     
     def __len__(self):
         return self.n_samples
-
-
-def _preprocess(preprocessing_fn=None):
-        # to keep things simple we will not apply transformations to each sample,
-        # but it would be a very good idea to look into preprocessing
-        _transform = []
-        if preprocessing_fn:
-            _transform.append(album.Lambda(image=preprocessing_fn))
-        _transform.append(album.Lambda(image=to_tensor, mask=to_tensor))            
-        return album.Compose(_transform)
-
-
-def _flexible_preprocess(preprocessing_fn=None):
-        # to keep things simple we will not apply transformations to each sample,
-        # but it would be a very good idea to look into preprocessing
-        _transform = []
-        if preprocessing_fn:
-            _transform.append(album.Lambda(image=preprocessing_fn))
-        _transform.append(album.Lambda(image=flexible_to_tensor, mask=flexible_to_tensor))            
-        return album.Compose(_transform)
 
 
 def _training_augmentation():
@@ -157,20 +134,4 @@ def reverse_one_hot(image):
         class key.
     """
     x = np.argmax(image, axis = -1)
-    return x
-
-# Perform colour coding on the reverse-one-hot outputs
-def colour_code_segmentation(image, label_values):
-    """
-    Given a 1-channel array of class keys, colour code the segmentation results.
-    # Arguments
-        image: single channel array where each value represents the class key.
-        label_values
-
-    # Returns
-        Colour coded image for segmentation visualization
-    """
-    colour_codes = np.array(label_values)
-    x = colour_codes[image.astype(int)]
-
     return x

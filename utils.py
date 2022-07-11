@@ -20,6 +20,11 @@ def load_all_from_path(path):
     # images are loaded as floats with values in the interval [0., 1.]
     return np.stack([np.array(Image.open(f)) for f in sorted(glob(path + '/*.png'))]).astype(np.float32) / 255.
 
+def load_from_path(path):
+    # loads all HxW .pngs contained in path as a 4D np.array of shape (n_images, H, W, 3)
+    # images are loaded as floats with values in the interval [0., 1.]
+    return np.array(Image.open(path)).astype(np.float32) / 255.
+
 def show_first_n(imgs, masks, n=5):
     # visualizes the first n elements of a series of images and segmentation masks
     imgs_to_draw = min(5, len(imgs))
@@ -136,5 +141,5 @@ def visualize(**images):
         plt.title(name.replace('_',' ').title(), fontsize=20)
         if image.shape[0] != config.WIDTH:
             image = image.T
-        plt.imshow(image)
+        plt.imshow(image.detach().numpy())
     plt.show()

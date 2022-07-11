@@ -16,16 +16,6 @@ def main():
     utils.make_log_dir(dt_string)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # reshape the image to simplify the handling of skip connections and maxpooling
-    # TODO try using two classes
-    #class_names = ['background', 'street']
-    class_names = ['street']
-    #select_classes = ['background', 'street']
-    select_classes = ['street']
-    #class_rgb_values = [[0, 0, 0], [255, 255, 255]]
-    class_rgb_values = [[255, 255, 255]]
-    # Get RGB values of required classes
-    select_class_indices = [class_names.index(cls.lower()) for cls in select_classes]
-    select_class_rgb_values =  np.array(class_rgb_values)[select_class_indices]
     if config.USE_AUGMENTATIONS:
         train_dataset = dataset.FlexibleDataset(
             'training', 
@@ -33,17 +23,13 @@ def main():
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
             augmentation=dataset._training_augmentation(),
-            preprocessing=dataset._flexible_preprocess(),
-            select_class_rgb_values=select_class_rgb_values
         )
         val_dataset = dataset.FlexibleDataset(
             'validation', 
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
-            augmentation=dataset._training_augmentation(), 
-            preprocessing=dataset._flexible_preprocess(),
-            select_class_rgb_values=select_class_rgb_values
+            augmentation=dataset._training_augmentation(),
         )
     else:
         train_dataset = dataset.ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
