@@ -5,7 +5,7 @@ import torch
 import config
 from train import train
 import utils
-from models.unet import UNet
+from models.unet_new import UNet
 import dataset
 import datetime
 

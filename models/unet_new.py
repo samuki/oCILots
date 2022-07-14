@@ -2,8 +2,9 @@ from glob import glob
 from random import sample
 import torch
 from torch import nn
-from tqdm.notebook import tqdm
+import torch.nn.functional as F
 from timm import create_model
+from typing import Optional, List
 
 # adopted from https://gist.github.com/rwightman/f8b24f4e6f5504aba03e999e02460d31
 
@@ -15,10 +16,10 @@ class UNet(nn.Module):
         backbone="resnet50",
         backbone_kwargs=None,
         backbone_indices=None,
-        decoder_use_batchnorm=True,
-        decoder_channels=(256, 128, 64, 32, 16),
-        in_chans=1,
-        num_classes=5,
+        decoder_use_batchnorm=False,
+        decoder_channels=(256, 250, 128, 64, 64),
+        in_chans=3,
+        num_classes=1,
         center=False,
         norm_layer=nn.BatchNorm2d,
     ):
@@ -153,6 +154,9 @@ class UnetDecoder(nn.Module):
             out_channels[-1], final_channels, kernel_size=(1, 1)
         )
 
+        self.activation = torch.nn.Sigmoid()
+
+
         self._init_weight()
 
     def _init_weight(self):
@@ -171,4 +175,5 @@ class UnetDecoder(nn.Module):
             skip = skips[i] if i < len(skips) else None
             x = b(x, skip)
         x = self.final_conv(x)
+        x = self.activation(x)
         return x
