@@ -2,6 +2,8 @@
 cil-road-segmentation-2022*
 __MACOSX
 tensorboard
+data
+results
 
 
 # Byte-compiled / optimized / DLL files
