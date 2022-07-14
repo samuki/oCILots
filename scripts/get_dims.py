@@ -44,9 +44,9 @@ def main(path):
     data["max_height"] = 0
 
     for filename in onlyfiles:
-        im = Image.open(path+filename)
+        im = Image.open(path + filename)
         width, height = im.size
-        if width not in [400, 1500] or height not in [400,1500]:
+        if width not in [400, 1500] or height not in [400, 1500]:
             print(filename, width, height)
         data["min_width"] = min(width, data["min_width"])
         data["max_width"] = max(width, data["max_width"])
