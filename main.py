@@ -42,7 +42,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
     n_epochs = config.EPOCHS
     train(train_dataloader, val_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs)
-    torch.save(model.state_dict(), "results/" + dt_string+"/model.pth")
+    torch.save(model.state_dict(), dt_string+"/model.pth")
 
     test_path = 'data/test/images'
     # predict on test set
