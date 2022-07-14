@@ -17,7 +17,7 @@ class UNet(nn.Module):
         backbone_kwargs=None,
         backbone_indices=None,
         decoder_use_batchnorm=False,
-        decoder_channels=(256, 250, 128, 64, 64),
+        decoder_channels=(256, 128, 64, 32, 16),
         in_chans=3,
         num_classes=1,
         center=False,
