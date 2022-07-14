@@ -7,7 +7,7 @@ from utils import  show_val_samples
 
 def train(train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs):
     # training loop
-    logdir = './tensorboard/net'
+    logdir = './results/tensorboard/net'
     writer = SummaryWriter(logdir)  # tensorboard writer (can also log images)
 
     history = {}  # collects metrics at the end of each epoch

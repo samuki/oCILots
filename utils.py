@@ -112,7 +112,7 @@ def show_patched_image(patches, labels, h_patches=25, w_patches=25):
 
 
 def create_submission(labels, test_filenames, submission_filename):
-    test_path='test/images'
+    test_path='data/test/images'
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn, patch_array in zip(sorted(test_filenames), labels):

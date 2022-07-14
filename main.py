@@ -4,36 +4,36 @@ import numpy as np
 import torch
 import config 
 from train import train
-from unet import UNet
 import utils
+from models.unet import UNet
 import dataset
 import datetime 
 
 def main():
     # log training
     now = datetime.datetime.now()
-    dt_string = now.strftime("%d%m%Y_%H:%M:%S")
+    dt_string = now.strftime("results/%d%m%Y_%H:%M:%S")
     utils.make_log_dir(dt_string)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # reshape the image to simplify the handling of skip connections and maxpooling
     if config.USE_AUGMENTATIONS:
         train_dataset = dataset.FlexibleDataset(
-            'training', 
+            'data/training', 
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
             augmentation=dataset._training_augmentation(),
         )
         val_dataset = dataset.FlexibleDataset(
-            'validation', 
+            'data/validation', 
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
             augmentation=dataset._training_augmentation(),
         )
     else:
-        train_dataset = dataset.ImageDataset('training', device, use_patches=False, resize_to=(384, 384))
-        val_dataset = dataset.ImageDataset('validation', device, use_patches=False, resize_to=(384, 384))
+        train_dataset = dataset.ImageDataset('data/training', device, use_patches=False, resize_to=(384, 384))
+        val_dataset = dataset.ImageDataset('data/validation', device, use_patches=False, resize_to=(384, 384))
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
     model = UNet().to(device)
@@ -42,9 +42,9 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
     n_epochs = config.EPOCHS
     train(train_dataloader, val_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs)
-    torch.save(model.state_dict(), dt_string+"/model.pth")
+    torch.save(model.state_dict(), "results/" + dt_string+"/model.pth")
 
-    test_path = 'test/images'
+    test_path = 'data/test/images'
     # predict on test set
     test_filenames = (glob(test_path + '/*.png'))
     test_images = utils.load_all_from_path(test_path)

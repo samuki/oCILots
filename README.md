@@ -1,5 +1,5 @@
 # oCILots
 
 <p align="left">
-  <img src="ocilot.png" width="350" alt="">
+  <img src="notebooks/ocilot.png" width="350" alt="">
 </p>
