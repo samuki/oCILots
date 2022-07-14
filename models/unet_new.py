@@ -2,8 +2,9 @@ from glob import glob
 from random import sample
 import torch
 from torch import nn
-from tqdm.notebook import tqdm
 from timm import create_model
+from typing import Optional, List
+
 
 # adopted from https://gist.github.com/rwightman/f8b24f4e6f5504aba03e999e02460d31
 
