@@ -37,7 +37,7 @@ class FlexibleDataset(torch.utils.data.Dataset):
             image, mask = sample["image"], sample["mask"]
         return utils.np_to_tensor(
             np.moveaxis(image, -1, 0).astype("float32"), self.device
-        ), utils.np_to_tensor(np.moveaxis(mask, -1, 0).astype("float32"), self.device)
+        ), utils.np_to_tensor(mask.astype('float32'), self.device)
 
     def __len__(self):
         return self.n_samples
