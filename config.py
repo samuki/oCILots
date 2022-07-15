@@ -15,4 +15,6 @@ EPOCHS = 10
 METRICS = {"acc": utils.accuracy_fn, "patch_acc": utils.patch_accuracy_fn}
 LOSS = torch.nn.BCELoss()
 
-USE_AUGMENTATIONS = False
+# this add random crops of size HEIGHT x WIDTH and augmentations with p_augement. View dataset.__training_augmentation() for details
+USE_AUGMENTATIONS = True
+p_augment=0.2

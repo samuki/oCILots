@@ -92,17 +92,25 @@ def _training_augmentation():
                 album.HorizontalFlip(p=1),
                 album.VerticalFlip(p=1),
                 album.RandomRotate90(p=1),
+                album.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1)
             ],
-            p=0.5),
+            p=config.p_augment),
         album.OneOf([
-                album.MotionBlur(p=0.2),
-                album.MedianBlur(blur_limit=3, p=0.1),
-                album.Blur(blur_limit=3, p=0.1),
-        ], p=0.5),
+                album.MotionBlur(p=1),
+                album.MedianBlur(blur_limit=3, p=1),
+                album.Blur(blur_limit=3, p=1),
+                
+        ], p=config.p_augment),
         album.OneOf([
-                album.OpticalDistortion(p=0.3),
-                album.GridDistortion(p=0.1),
-        ], p=0.5),
+                album.OpticalDistortion(p=1),
+                album.GridDistortion(p=1),
+        ], p=config.p_augment),
+        
+        album.OneOf([
+            album.RandomContrast(limit=.6, p=1),
+            album.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=1),
+            album.RandomBrightness(limit=0.2, p=1)
+        ], p=config.p_augment), 
     ]
     return album.Compose(train_transform)
 
