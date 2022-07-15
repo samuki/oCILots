@@ -211,20 +211,20 @@ def make_logger(log_file: str = None, name='logger'):
 
 
 def save_if_best_model(model, save_dir, epoch, current, best_stats, logger):
-        is_best = False
-        if config.config.save_best_metric not in best_stats:
-            is_best=True
-        else: 
-            if config.minimize_metric:
-                if current[epoch][config.save_best_metric] < best_stats[config.save_best_metric]:
-                    is_best=True
-            else:
-                if current[epoch][config.save_best_metric] > best_stats[config.save_best_metric]:
-                    is_best=True
-        if is_best: 
-            logger.info("New best result at epoch " + str(epoch))
-            best_stats = current[epoch]
-            logger.info("Loging results ---> {0}".format(best_stats))
-            torch.save(model.state_dict(), save_dir + "/model.pth")
-            logger.info("Saved model")
-        return best_stats
+    is_best = False
+    if config.save_best_metric not in best_stats:
+        is_best=True
+    else: 
+        if config.minimize_metric:
+            if current[epoch][config.save_best_metric] < best_stats[config.save_best_metric]:
+                is_best=True
+        else:
+            if current[epoch][config.save_best_metric] > best_stats[config.save_best_metric]:
+                is_best=True
+    if is_best: 
+        logger.info("New best result at epoch " + str(epoch))
+        best_stats = current[epoch]
+        logger.info("Loging results ---> {0}".format(best_stats))
+        torch.save(model.state_dict(), save_dir + "/model.pth")
+        logger.info("Saved model")
+    return best_stats

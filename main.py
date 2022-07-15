@@ -61,7 +61,8 @@ def main():
         save_dir=dt_string,
     )
     
-    model = model.load_state_dict(torch.load(dt_string+'/model.pth'))
+    model.load_state_dict(torch.load(dt_string+'/model.pth'))
+    model.eval()
     test_path = "data/test/images"
     # predict on test set
     test_filenames = glob(test_path + "/*.png")

@@ -12,6 +12,7 @@ def train(
     # training loop
     logdir = "./results/tensorboard/net"
     logger = utils.make_logger(save_dir+"/logs.txt")
+    logger.info('Starting')
     writer = SummaryWriter(logdir)  # tensorboard writer (can also log images)
     best_stats = {}
     history = {}  # collects metrics at the end of each epoch
@@ -57,7 +58,7 @@ def train(
 
         # summarize metrics, log to tensorboard and display
         history[epoch] = {k: sum(v) / len(v) for k, v in metrics.items()}
-        best_stats = utils.save_if_best_model(save_dir, epoch, history, best_stats, logger)
+        best_stats = utils.save_if_best_model(model, save_dir, epoch, history, best_stats, logger)
         for k, v in history[epoch].items():
             writer.add_scalar(k, v, epoch)
         print(
