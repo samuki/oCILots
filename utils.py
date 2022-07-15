@@ -7,7 +7,7 @@ import torch
 import os
 import config
 import shutil
-
+import logging
 
 def make_log_dir(dt):
     os.makedirs(dt)
@@ -168,7 +168,7 @@ def accuracy_fn(y_hat, y):
     return (y_hat.round() == y.round()).float().mean()
 
 
-def visualize(**images):
+def visualize(index, save, show, **images):
     """
     Plot images in one row
     """
@@ -182,5 +182,49 @@ def visualize(**images):
         plt.title(name.replace("_", " ").title(), fontsize=20)
         if image.shape[0] != config.WIDTH:
             image = image.T
-        plt.imshow(image.detach().numpy())
-    plt.show()
+        plt.imshow(image)
+    if show:
+        plt.show()
+    if save:
+        plt.savefig('examples/'+str(index)+'.png')
+        
+        
+def make_logger(log_file: str = None, name='logger'):
+    """
+    Create a logger for logging the training/testing process.
+
+    :param log_file: path to file where log is stored as well
+    :return: logger object
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(level=logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s %(message)s')
+    if log_file is not None:
+        fh = logging.FileHandler(log_file)
+        logger.addHandler(fh)
+        fh.setFormatter(formatter)
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.INFO)
+    sh.setFormatter(formatter)
+    logging.getLogger("").addHandler(sh)
+    return logger
+
+
+def save_if_best_model(model, save_dir, epoch, current, best_stats, logger):
+        is_best = False
+        if config.config.save_best_metric not in best_stats:
+            is_best=True
+        else: 
+            if config.minimize_metric:
+                if current[epoch][config.save_best_metric] < best_stats[config.save_best_metric]:
+                    is_best=True
+            else:
+                if current[epoch][config.save_best_metric] > best_stats[config.save_best_metric]:
+                    is_best=True
+        if is_best: 
+            logger.info("New best result at epoch " + str(epoch))
+            best_stats = current[epoch]
+            logger.info("Loging results ---> {0}".format(best_stats))
+            torch.save(model.state_dict(), save_dir + "/model.pth")
+            logger.info("Saved model")
+        return best_stats

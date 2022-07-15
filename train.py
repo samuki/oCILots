@@ -1,17 +1,19 @@
+from logging import Logger
 from matplotlib import pyplot as plt
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from tqdm.notebook import tqdm
 from utils import show_val_samples
-
+import utils
 
 def train(
-    train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs
+    train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs, save_dir
 ):
     # training loop
     logdir = "./results/tensorboard/net"
+    logger = utils.make_logger(save_dir+"/logs.txt")
     writer = SummaryWriter(logdir)  # tensorboard writer (can also log images)
-
+    best_stats = {}
     history = {}  # collects metrics at the end of each epoch
     for epoch in range(n_epochs):  # loop over the dataset multiple times
 
@@ -55,6 +57,7 @@ def train(
 
         # summarize metrics, log to tensorboard and display
         history[epoch] = {k: sum(v) / len(v) for k, v in metrics.items()}
+        best_stats = utils.save_if_best_model(save_dir, epoch, history, best_stats, logger)
         for k, v in history[epoch].items():
             writer.add_scalar(k, v, epoch)
         print(
