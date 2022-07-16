@@ -2,7 +2,7 @@ from logging import Logger
 from matplotlib import pyplot as plt
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from utils import show_val_samples
 import utils
 
@@ -24,6 +24,7 @@ def train(
             metrics[k] = []
             metrics["val_" + k] = []
 
+        
         pbar = tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{n_epochs}")
         # training
         model.train()

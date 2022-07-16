@@ -195,9 +195,18 @@ class Segformer(nn.Module):
             nn.Conv2d(decoder_dim, num_classes, 1),
         )
 
+        self.activation = torch.nn.Sigmoid()
+
     def forward(self, x):
         layer_outputs = self.mit(x, return_layer_outputs = True)
 
         fused = [to_fused(output) for output, to_fused in zip(layer_outputs, self.to_fused)]
         fused = torch.cat(fused, dim = 1)
-        return self.to_segmentation(fused)
+
+        out = self.to_segmentation(fused)
+
+        # TODO: this has been added by raunc as a quick fix and should be done more elegantly
+        out = F.interpolate(out, size = x.shape[-2:], mode = 'nearest')
+        out = self.activation(out)
+        
+        return out
