@@ -61,7 +61,7 @@ def main():
     
     loss_fn = config.LOSS
     metric_fns = config.METRICS
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    optimizer = torch.optim.Adam(model.parameters())
     n_epochs = config.EPOCHS
     train(
         train_dataloader,
