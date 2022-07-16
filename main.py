@@ -54,7 +54,7 @@ def main():
         ff_expansion = (8, 8, 4, 4),    # feedforward expansion factor of each stage
         reduction_ratio = (8, 4, 2, 1), # reduction ratio of each stage for efficient attention
         num_layers = 2,                 # num layers of each stage
-        decoder_dim = 384,              # decoder dimension
+        decoder_dim = 256,              # decoder dimension
         num_classes = 1                 # number of segmentation classes
     ).to(device)
     
