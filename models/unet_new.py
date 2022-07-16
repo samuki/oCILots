@@ -13,14 +13,14 @@ class UNet(nn.Module):
     # UNet-like architecture for single class semantic segmentation.
     def __init__(
         self,
-        backbone="resnet50",
+        backbone="xception71",
         backbone_kwargs=None,
         backbone_indices=None,
-        decoder_use_batchnorm=False,
+        decoder_use_batchnorm=True,
         decoder_channels=(256, 128, 64, 32, 16),
         in_chans=3,
         num_classes=1,
-        center=False,
+        center=True,
         norm_layer=nn.BatchNorm2d,
     ):
         super().__init__()

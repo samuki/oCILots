@@ -92,17 +92,25 @@ def _training_augmentation():
                 album.HorizontalFlip(p=1),
                 album.VerticalFlip(p=1),
                 album.RandomRotate90(p=1),
+                album.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1)
             ],
-            p=0.5),
+            p=config.p_augment),
         album.OneOf([
-                album.MotionBlur(p=0.2),
-                album.MedianBlur(blur_limit=3, p=0.1),
-                album.Blur(blur_limit=3, p=0.1),
-        ], p=0.5),
+                album.MotionBlur(p=1),
+                album.MedianBlur(blur_limit=3, p=1),
+                album.Blur(blur_limit=3, p=1),
+                
+        ], p=config.p_augment),
         album.OneOf([
-                album.OpticalDistortion(p=0.3),
-                album.GridDistortion(p=0.1),
-        ], p=0.5),
+                album.OpticalDistortion(p=1),
+                album.GridDistortion(p=1),
+        ], p=config.p_augment),
+        
+        album.OneOf([
+            album.RandomContrast(limit=.6, p=1),
+            album.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=1),
+            album.RandomBrightness(limit=0.2, p=1)
+        ], p=config.p_augment), 
     ]
     return album.Compose(train_transform)
 
@@ -117,52 +125,3 @@ def _validation_augmentation():
         ),
     ]
     return album.Compose(test_transform)
-
-
-def to_tensor(x, **kwargs):
-    return x
-
-
-def flexible_to_tensor(x, **kwargs):
-    return np.moveaxis(x, -1, 0).astype("float32")
-
-
-# Perform one hot encoding on label
-def one_hot_encode(label, label_values):
-    """
-    Convert a segmentation image label array to one-hot format
-    by replacing each pixel value with a vector of length num_classes
-    # Arguments
-        label: The 2D array segmentation image label
-        label_values
-
-    # Returns
-        A 2D array with the same width and hieght as the input, but
-        with a depth size of num_classes
-    """
-    semantic_map = []
-    for colour in label_values:
-        equality = np.equal(label, colour)
-        class_map = np.all(equality, axis=-1)
-        semantic_map.append(class_map)
-    semantic_map = np.stack(semantic_map, axis=-1)
-
-    return semantic_map
-
-
-# Perform reverse one-hot-encoding on labels / preds
-def reverse_one_hot(image):
-    """
-    Transform a 2D array in one-hot format (depth is num_classes),
-    to a 2D array with only 1 channel, where each pixel value is
-    the classified class key.
-    # Arguments
-        image: The one-hot format image
-
-    # Returns
-        A 2D array with the same width and hieght as the input, but
-        with a depth size of 1, where each pixel value is the classified
-        class key.
-    """
-    x = np.argmax(image, axis=-1)
-    return x

@@ -58,9 +58,11 @@ def main():
         metric_fns,
         optimizer,
         n_epochs,
+        save_dir=dt_string,
     )
-    torch.save(model.state_dict(), dt_string + "/model.pth")
-
+    
+    model.load_state_dict(torch.load(dt_string+'/model.pth'))
+    model.eval()
     test_path = "data/test/images"
     # predict on test set
     test_filenames = glob(test_path + "/*.png")
