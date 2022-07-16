@@ -23,14 +23,14 @@ def main():
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
-            augmentation=dataset._training_augmentation(),
+            augmentation=dataset.training_augmentation(),
         )
         val_dataset = dataset.FlexibleDataset(
             "data/validation",
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
-            augmentation=dataset._training_augmentation(),
+            augmentation=dataset.validation_augmentation(),
         )
     else:
         train_dataset = dataset.ImageDataset(
