@@ -1,3 +1,5 @@
+# implementation from https://github.com/lucidrains/segformer-pytorch/blob/main/segformer_pytorch/segformer_pytorch.py
+
 from math import sqrt
 from functools import partial
 import torch
