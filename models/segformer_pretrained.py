@@ -11,7 +11,8 @@ class SegFormerPretrained(nn.Module):
     def __init__(self):
         super().__init__()
         # define model
-        self.model = SegformerForSemanticSegmentation.from_pretrained("nvidia/mit-b0",
+
+        self.model = SegformerForSemanticSegmentation.from_pretrained("nvidia/mit-b5",
                                                                 num_labels=1, 
         )
 
