@@ -7,6 +7,8 @@ from train import train
 import utils
 from models.unet_new import UNet
 from models.segformer import Segformer
+from models.segformer_pretrained import SegFormerPretrained
+
 import dataset
 import datetime
 
@@ -48,15 +50,7 @@ def main():
     )
     # model = UNet().to(device)
 
-    model = Segformer(
-        dims = (32, 64, 160, 256),      # dimensions of each stage
-        heads = (1, 2, 5, 8),           # heads of each stage
-        ff_expansion = (8, 8, 4, 4),    # feedforward expansion factor of each stage
-        reduction_ratio = (8, 4, 2, 1), # reduction ratio of each stage for efficient attention
-        num_layers = 2,                 # num layers of each stage
-        decoder_dim = 256,              # decoder dimension
-        num_classes = 1                 # number of segmentation classes
-    ).to(device)
+    model = SegFormerPretrained().to(device)
     
     
     loss_fn = config.LOSS

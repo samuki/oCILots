@@ -208,7 +208,7 @@ class Segformer(nn.Module):
         out = self.to_segmentation(fused)
 
         # TODO: this has been added by raunc as a quick fix and should be done more elegantly
-        out = F.interpolate(out, size = x.shape[-2:], mode = 'nearest')
         out = self.activation(out)
-        
+        out = F.interpolate(out, size = x.shape[-2:], mode = 'nearest')
+
         return out
