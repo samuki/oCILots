@@ -10,7 +10,7 @@ WIDTH = 384
 MINHEIGHT = 384
 MINWIDTH = 384
 
-EPOCHS = 10
+EPOCHS = 25
 
 METRICS = {"acc": utils.accuracy_fn, "patch_acc": utils.patch_accuracy_fn}
 LOSS = torch.nn.BCELoss()

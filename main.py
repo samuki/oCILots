@@ -6,6 +6,7 @@ import config
 from train import train
 import utils
 from models.unet_new import UNet
+from models.segformer import Segformer
 import dataset
 import datetime
 
@@ -45,10 +46,22 @@ def main():
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
-    model = UNet().to(device)
+    # model = UNet().to(device)
+
+    model = Segformer(
+        dims = (32, 64, 160, 256),      # dimensions of each stage
+        heads = (1, 2, 5, 8),           # heads of each stage
+        ff_expansion = (8, 8, 4, 4),    # feedforward expansion factor of each stage
+        reduction_ratio = (8, 4, 2, 1), # reduction ratio of each stage for efficient attention
+        num_layers = 2,                 # num layers of each stage
+        decoder_dim = 384,              # decoder dimension
+        num_classes = 1                 # number of segmentation classes
+    ).to(device)
+    
+    
     loss_fn = config.LOSS
     metric_fns = config.METRICS
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     n_epochs = config.EPOCHS
     train(
         train_dataloader,
