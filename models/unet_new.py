@@ -13,7 +13,7 @@ class UNet(nn.Module):
     # UNet-like architecture for single class semantic segmentation.
     def __init__(
         self,
-        backbone="xception71",
+        backbone="tf_efficientnet_b7_ns",
         backbone_kwargs=None,
         backbone_indices=None,
         decoder_use_batchnorm=True,

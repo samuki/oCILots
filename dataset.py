@@ -84,7 +84,7 @@ class ImageDataset(torch.utils.data.Dataset):
         return self.n_samples
 
 
-def _training_augmentation():
+def training_augmentation():
     train_transform = [
         album.RandomCrop(height=config.HEIGHT, width=config.WIDTH, always_apply=True),
         album.OneOf(
@@ -115,13 +115,8 @@ def _training_augmentation():
     return album.Compose(train_transform)
 
 
-def _validation_augmentation():
+def validation_augmentation():
     test_transform = [
-        album.PadIfNeeded(
-            min_height=config.MINHEIGHT,
-            min_width=config.MINWIDTH,
-            always_apply=True,
-            border_mode=0,
-        ),
+        album.RandomCrop(height=config.HEIGHT, width=config.WIDTH, always_apply=True),
     ]
     return album.Compose(test_transform)
