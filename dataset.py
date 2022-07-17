@@ -92,7 +92,6 @@ def training_augmentation():
                 album.HorizontalFlip(p=1),
                 album.VerticalFlip(p=1),
                 album.RandomRotate90(p=1),
-                album.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1)
             ],
             p=config.p_augment),
         album.OneOf([
@@ -104,19 +103,22 @@ def training_augmentation():
         album.OneOf([
                 album.OpticalDistortion(p=1),
                 album.GridDistortion(p=1),
+                album.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1),
         ], p=config.p_augment),
         
         album.OneOf([
             album.RandomContrast(limit=.6, p=1),
             album.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=1),
             album.RandomBrightness(limit=0.2, p=1)
-        ], p=config.p_augment), 
+        ], p=config.p_augment),
+        album.RandomBrightnessContrast(p=config.p_augment),    
+        album.RandomGamma(p=config.p_augment)
     ]
     return album.Compose(train_transform)
 
 
 def validation_augmentation():
     test_transform = [
-        album.RandomCrop(height=config.HEIGHT, width=config.WIDTH, always_apply=True),
+        album.RandomCrop(height=config.MINHEIGHT, width=config.MINWIDTH, always_apply=True),
     ]
     return album.Compose(test_transform)
