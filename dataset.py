@@ -30,6 +30,9 @@ class FlexibleDataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         image = utils.load_from_path(self.x[item])[:, :, :3]
         mask = utils.load_from_path(self.y[item])
+        if len(mask.shape) == 3:
+            mask = mask[:, :, 0]
+
         if self.use_patches:  # split each image into patches
             image, mask = utils.image_to_patches(image, mask)
         if self.augmentation:
