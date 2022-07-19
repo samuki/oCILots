@@ -6,8 +6,8 @@ import config
 from train import train
 import utils
 from models.unet_new import UNet
-from models.swin_transformer import SwinTransformerPretrained
-from models.maskformer import MaskformerPretrained
+#from models.swin_transformer import SwinTransformerPretrained
+#from models.maskformer import MaskformerPretrained
 import dataset
 import datetime
 from models.LRSR import LRSRModel
