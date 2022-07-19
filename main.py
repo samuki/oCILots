@@ -6,8 +6,11 @@ import config
 from train import train
 import utils
 from models.unet_new import UNet
+from models.swin_transformer import SwinTransformerPretrained
+from models.maskformer import MaskformerPretrained
 import dataset
 import datetime
+from models.LRSR import LRSRModel
 
 
 def main():
@@ -45,7 +48,9 @@ def main():
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
-    model = UNet().to(device)
+    #model = SwinTransformerPretrained().to(device)
+    #model = MaskformerPretrained().to(device)
+    model = LRSRModel().to(device)
     loss_fn = config.LOSS
     metric_fns = config.METRICS
     optimizer = torch.optim.Adam(model.parameters())
