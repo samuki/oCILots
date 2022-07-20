@@ -5,11 +5,12 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm.notebook import tqdm
 from utils import show_val_samples
 import utils
-
+import config
 def train(
     train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs, save_dir
 ):
     # training loop
+    lr = config.start_lr
     logdir = "./results/tensorboard/net"
     logger = utils.make_logger(save_dir+"/logs.txt")
     logger.info('Starting')
@@ -27,7 +28,11 @@ def train(
         pbar = tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{n_epochs}")
         # training
         model.train()
-        for (x, y) in pbar:
+        for i, (x, y) in enumerate(pbar):
+            # configure custom scheduler in config
+            if config.use_custom_lr_scheduler:
+                lr = utils.learning_rate(optimizer, lr, train_dataloader.dataset.n_samples,
+                i, warmup_iter=config.warm_up_epochs, power=0.9)
             y = torch.squeeze(y)
             optimizer.zero_grad()  # zero out gradients
             y_hat = torch.squeeze(model(x))  # forward pass

@@ -5,12 +5,9 @@ import torch
 import config
 from train import train
 import utils
-from models.unet_new import UNet
-#from models.swin_transformer import SwinTransformerPretrained
-#from models.maskformer import MaskformerPretrained
 import dataset
 import datetime
-from models.LRSR import LRSRModel
+
 
 
 def main():
@@ -18,7 +15,7 @@ def main():
     now = datetime.datetime.now()
     dt_string = now.strftime("results/%d%m%Y_%H:%M:%S")
     utils.make_log_dir(dt_string)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = config.DEVICE
     # reshape the image to simplify the handling of skip connections and maxpooling
     if config.USE_AUGMENTATIONS:
         train_dataset = dataset.FlexibleDataset(
@@ -48,13 +45,13 @@ def main():
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
-    #model = SwinTransformerPretrained().to(device)
-    #model = MaskformerPretrained().to(device)
-    model = LRSRModel().to(device)
+    
+    model = config.MODEL
     loss_fn = config.LOSS
     metric_fns = config.METRICS
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = config.OPTIMIZER
     n_epochs = config.EPOCHS
+    
     train(
         train_dataloader,
         val_dataloader,
