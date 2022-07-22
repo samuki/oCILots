@@ -30,6 +30,7 @@ def train(
         model.train()
         for i, (x, y) in enumerate(pbar):
             # configure custom scheduler in config
+            
             if config.use_custom_lr_scheduler:
                 lr = utils.learning_rate(optimizer, lr, train_dataloader.dataset.n_samples,
                 i, warmup_iter=config.warm_up_epochs, power=0.9)

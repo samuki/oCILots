@@ -1,12 +1,11 @@
 from glob import glob
-import cv2
-import numpy as np
 import torch
 import config
 from train import train
 import utils
 import dataset
 import datetime
+import test
 
 
 
@@ -19,14 +18,14 @@ def main():
     # reshape the image to simplify the handling of skip connections and maxpooling
     if config.USE_AUGMENTATIONS:
         train_dataset = dataset.FlexibleDataset(
-            "data/training",
+            config.TRAIN_PATH,
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
             augmentation=dataset.training_augmentation(),
         )
         val_dataset = dataset.FlexibleDataset(
-            "data/validation",
+            config.VAL_PATH,
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
@@ -34,10 +33,10 @@ def main():
         )
     else:
         train_dataset = dataset.ImageDataset(
-            "data/training", device, use_patches=False, resize_to=(384, 384)
+            config.TRAIN_PATH, device, use_patches=False, resize_to=(384, 384)
         )
         val_dataset = dataset.ImageDataset(
-            "data/validation", device, use_patches=False, resize_to=(384, 384)
+            config.VAL_PATH, device, use_patches=False, resize_to=(384, 384)
         )
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=config.BATCH_SIZE, shuffle=True
@@ -45,13 +44,11 @@ def main():
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
-    
     model = config.MODEL
     loss_fn = config.LOSS
     metric_fns = config.METRICS
     optimizer = config.OPTIMIZER
     n_epochs = config.EPOCHS
-    
     train(
         train_dataloader,
         val_dataloader,
@@ -63,37 +60,17 @@ def main():
         save_dir=dt_string,
     )
     
+    # load best model
     model.load_state_dict(torch.load(dt_string+'/model.pth'))
     model.eval()
-    test_path = "data/test/images"
-    # predict on test set
-    test_filenames = glob(test_path + "/*.png")
-    test_images = utils.load_all_from_path(test_path)
-    size = test_images.shape[1:3]
-    # we also need to resize the test images. This might not be the best ideas depending on their spatial resolution.
-    test_images = np.stack(
-        [cv2.resize(img, dsize=(384, 384)) for img in test_images], 0
-    )
-    test_images = test_images[:, :, :, :3]
-    test_images = utils.np_to_tensor(np.moveaxis(test_images, -1, 1), device)
-    test_pred = [model(t).detach().cpu().numpy() for t in test_images.unsqueeze(1)]
-    test_pred = np.concatenate(test_pred, 0)
-    test_pred = np.moveaxis(test_pred, 1, -1)  # CHW to HWC
-    test_pred = np.stack(
-        [cv2.resize(img, dsize=size) for img in test_pred], 0
-    )  # resize to original shape
-    # now compute labels
-    test_pred = test_pred.reshape(
-        (
-            -1,
-            size[0] // config.PATCH_SIZE,
-            config.PATCH_SIZE,
-            size[0] // config.PATCH_SIZE,
-            config.PATCH_SIZE,
-        )
-    )
-    test_pred = np.moveaxis(test_pred, 2, 3)
-    test_pred = np.round(np.mean(test_pred, (-1, -2)) > config.CUTOFF)
+
+    # load test dataset
+    test_images, size, test_filenames = dataset.load_test_data()
+
+    # create test predictions
+    test_pred = test.test_prediction(model, test_images, size, cutoff = config.CUTOFF)
+    
+    # create submision file
     utils.create_submission(
         test_pred, test_filenames, submission_filename=dt_string + "/submission.csv"
     )

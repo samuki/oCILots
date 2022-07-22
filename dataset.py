@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import utils
 import config
+import glob
 import albumentations as album
 
 
@@ -29,7 +30,7 @@ class FlexibleDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, item):
         image = utils.load_from_path(self.x[item])[:, :, :3]
-        mask = utils.load_from_path(self.y[item])
+        mask = utils.load_from_path(self.y[item], grey=True)
         if self.use_patches:  # split each image into patches
             image, mask = utils.image_to_patches(image, mask)
         if self.augmentation:
@@ -82,6 +83,21 @@ class ImageDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return self.n_samples
+
+
+def load_test_data():
+    test_path = config.TEST_PATH
+    # predict on test set
+    test_filenames = glob.glob(test_path + "/*.png")
+    test_images = utils.load_all_from_path(test_path)
+    size = test_images.shape[1:3]
+    # we also need to resize the test images. This might not be the best ideas depending on their spatial resolution.
+    test_images = np.stack(
+        [cv2.resize(img, dsize=(384, 384)) for img in test_images], 0
+    )
+    test_images = test_images[:, :, :, :3]
+    test_images = utils.np_to_tensor(np.moveaxis(test_images, -1, 1), config.DEVICE)
+    return test_images, size, test_filenames
 
 
 def training_augmentation():
