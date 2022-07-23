@@ -10,7 +10,9 @@ from models.segformer import Segformer
 from models.segformer_pretrained import SegFormerPretrained
 
 import dataset
+import datasetSegmentation
 import datetime
+from transformers import SegformerFeatureExtractor
 
 
 def main():
@@ -20,6 +22,18 @@ def main():
     utils.make_log_dir(dt_string)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # reshape the image to simplify the handling of skip connections and maxpooling
+   
+    feature_extractor = SegformerFeatureExtractor(reduce_labels=False, size=400)
+
+    train_dataset = datasetSegmentation.SemanticSegmentationDataset(
+        feature_extractor=feature_extractor, device=device
+    )
+
+    val_dataset = datasetSegmentation.SemanticSegmentationDataset(
+        feature_extractor=feature_extractor, train=False, device=device
+    )
+   
+    """
     if config.USE_AUGMENTATIONS:
         train_dataset = dataset.FlexibleDataset(
             "data/training",
@@ -42,6 +56,8 @@ def main():
         val_dataset = dataset.ImageDataset(
             "data/validation", device, use_patches=False, resize_to=(384, 384)
         )
+    """
+
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
@@ -55,7 +71,7 @@ def main():
     
     loss_fn = config.LOSS
     metric_fns = config.METRICS
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0000001)
     n_epochs = config.EPOCHS
     train(
         train_dataloader,

@@ -7,6 +7,8 @@ from train import train
 import utils
 from models.unet_new import UNet
 from models.segformer import Segformer
+from models.segformer_pretrained import SegFormerPretrained
+
 import dataset
 import datetime
 
@@ -14,10 +16,10 @@ import datetime
 def main():
     # log training
     now = datetime.datetime.now()
-    model_path = './results/16072022_09:35:56'
+    model_path = './results/16072022_17:02:01'
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = UNet().to(device)
+    model = SegFormerPretrained().to(device)
 
     model.load_state_dict(torch.load(model_path+'/model.pth'))
     model.eval()
