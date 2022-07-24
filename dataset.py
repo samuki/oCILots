@@ -5,6 +5,7 @@ import torch
 import utils
 import config
 import albumentations as album
+import torchvision
 
 
 class FlexibleDataset(torch.utils.data.Dataset):
@@ -38,9 +39,19 @@ class FlexibleDataset(torch.utils.data.Dataset):
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
             image, mask = sample["image"], sample["mask"]
-        return utils.np_to_tensor(
+        
+        
+        transform = torchvision.transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            )
+
+        image = utils.np_to_tensor(
             np.moveaxis(image, -1, 0).astype("float32"), self.device
-        ), utils.np_to_tensor(mask.astype("float32"), self.device)
+        )
+        image = transform(image)
+        
+        return  image, utils.np_to_tensor(mask.astype("float32"), self.device)
 
     def __len__(self):
         return self.n_samples
