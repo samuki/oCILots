@@ -49,6 +49,12 @@ def main():
     metric_fns = config.METRICS
     optimizer = config.OPTIMIZER
     n_epochs = config.EPOCHS
+
+    if config.LOAD_CKTP:
+        model.load_state_dict(torch.load(config.CKPT_PATH+'/model.pth'))
+        model.eval()
+
+
     train(
         train_dataloader,
         val_dataloader,
