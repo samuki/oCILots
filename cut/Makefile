@@ -6,7 +6,7 @@ CFLAGS = -O3 -Wall -Wextra -Wpedantic
 bin/%.o: src/%.cpp
 	$(CC) $(CFLAGS) -c -fPIC -o $@ $^
 
-include/cut-seg.so: src/cut-seg.cpp bin/segmenter.o bin/util.o
+include/cut-seg.so: src/cut-seg.cpp bin/segmenter.o
 	$(CC) -shared -fPIC $(CFLAGS) -o $@ $^
 
 .PHONY: clean

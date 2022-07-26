@@ -1,6 +1,3 @@
-from typing import cast
-import os
-import time
 import itertools
 import math
 import numpy as np
@@ -13,53 +10,17 @@ N = W * H
 N_IMAGES = 144
 
 PREDICTIONS_FILENAME_NPY = "../../data/predictions.npy"
-PREDICTIONS_FILENAME_TXT = "../../data/predictions_flattened.csv"
-SEGMENTATIONS_DIR = "../data/segmentations"
 
 Images = NDArray[Shape["144, 400, 400"], Float]
 
 
-def load_predictions(method: str) -> Images:
-    # load and reshape predictions & segmentations
-    start = time.perf_counter()
-    if method == "npy":
-        predictions = np.load(PREDICTIONS_FILENAME_NPY)
-    elif method == "csv":
-        predictions = np.loadtxt(PREDICTIONS_FILENAME_TXT)
-        predictions = predictions.reshape((N_IMAGES, W, H))
-    else:
-        raise ValueError(f"method must be 'npy' or 'csv', but was '{method}'")
-    end = time.perf_counter()
-    print(f"loaded predictions in {end-start:.4f} seconds")
-    return cast(Images, predictions)
-
-
-def load_segmentations(dir_name: str) -> dict[str, Images]:
-    start = time.perf_counter()
-    segmentations = {}
-    fnames = os.listdir(dir_name)
-    n_segs = len(fnames)
-    for i, filename in enumerate(fnames):
-        print(f"\rloading segmentation {i+1:{len(str(n_segs))}d}/{n_segs} ... ", end="")
-        segs = np.loadtxt(f"{dir_name}/{filename}")
-        segs = segs.reshape((N_IMAGES, W, H))
-        segmentations[filename] = segs
-    end = time.perf_counter()
-    print(
-        f"\rloaded {n_segs} segmentations in {end-start:.4f} seconds "
-        f"({(end-start)/n_segs:.4f} per segmentation)"
-    )
-    return segmentations
-
-
-def main() -> None:
+def visualize(predictions: Images, segmentations: dict[str, Images]) -> None:
     # load prediction & segmentation images
-    predictions = load_predictions('npy')
-    segmentations = load_segmentations(SEGMENTATIONS_DIR)
     n_segmentations = len(segmentations)
     n_subplots = n_segmentations + 2
     n_rows = int(math.ceil(math.sqrt(n_subplots)))
 
+    n_images = predictions.shape[0]
     curr_image = 0
 
     # plot prediction heatmap and segmentation side-by-side
@@ -75,10 +36,8 @@ def main() -> None:
     ):
         ax.title.set_text(segmenter)
         cut_images.append(ax.imshow(segs[curr_image, :, :]))
-    #  fig.subplot_tool()
 
     def show_image() -> None:
-        nonlocal curr_image
         pred_image.set_data(predictions[curr_image, :, :])
         round_image.set_data(np.round(predictions[curr_image, :, :]))
         for im, segs in zip(cut_images, segmentations.values()):
@@ -87,11 +46,15 @@ def main() -> None:
 
     def left_callback() -> None:
         nonlocal curr_image
+        if curr_image == 0:
+            return
         curr_image -= 1
         show_image()
 
     def right_callback() -> None:
         nonlocal curr_image
+        if curr_image == n_images - 1:
+            return
         curr_image += 1
         show_image()
 
@@ -104,7 +67,3 @@ def main() -> None:
 
     fig.show()
     plt.show()
-
-
-if __name__ == "__main__":
-    main()

@@ -1,18 +1,19 @@
 #pragma once
 
 #include "util.hpp"
-
+#include "ndarray.hpp"
 
 class Segmenter {
 protected:
     const unsigned m_resolution;
-    const InImage* m_image;
+    NDArray<double> m_image;
 
-    Segmenter(unsigned resolution) : m_resolution(resolution), m_image(nullptr) {}
+    Segmenter(unsigned resolution)
+        : m_resolution(resolution), m_image(nullptr, 0, nullptr, nullptr) {}
 
 public:
     virtual std::string name() const = 0;
-    void segment(const InImage& in_image, OutImage& out_image);
+    void segment(const NDArray<double>& in_image, NDArray<long>& out_image);
     virtual ~Segmenter() = default;
 
 protected:
@@ -20,9 +21,9 @@ protected:
         return round(m_resolution * x);
     }
 
-    virtual Capacity edge_weight(int i, int j) const = 0;
-    virtual Capacity edge_weight_s(int i) const = 0;
-    virtual Capacity edge_weight_t(int i) const = 0;
+    virtual Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const = 0;
+    virtual Capacity edge_weight_s(unsigned i, unsigned j) const = 0;
+    virtual Capacity edge_weight_t(unsigned i, unsigned j) const = 0;
 };
 
 
@@ -42,19 +43,22 @@ public:
     }
 
 protected:
-    Capacity edge_weight(int i, int j) const {
-        const double diff = (*m_image)[i] - (*m_image)[j];
+    Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const {
+        const double diff = m_image(i1, j1) - m_image(i2, j2);
         const double cap = exp(-0.5 * diff * diff / m_sigma);
+        std::clog << "interior capacity " << cap << " => " << discretize(cap) << '\n';
         return discretize(cap);
     }
 
-    Capacity edge_weight_s(int i) const {
-        const double cap = - m_lambda * log((*m_image)[i]);
+    Capacity edge_weight_s(unsigned i, unsigned j) const {
+        const double cap = - m_lambda * log(m_image(i, j));
+        std::clog << "source capacity " << cap << " => " << discretize(cap) << '\n';
         return discretize(cap);
     }
 
-    Capacity edge_weight_t(int i) const {
-        const double cap = - m_lambda * log(1 - (*m_image)[i]);
+    Capacity edge_weight_t(unsigned i, unsigned j) const {
+        const double cap = - m_lambda * log(1 - m_image(i, j));
+        std::clog << "sink capacity " << cap << " => " << discretize(cap) << '\n';
         return discretize(cap);
     }
 };

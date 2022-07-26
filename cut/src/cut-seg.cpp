@@ -1,69 +1,55 @@
 #include "util.hpp"
 #include "segmenter.hpp"
+#include "ndarray.hpp"
 
-extern "C" int numpy(const int* const arr, int w, int h) {
-    std::cout << w << " x " << h << " numpy array looks like\n";
-    for (int i = 0; i < w; ++i) {
-        for (int j = 0; j < h; ++j) {
-            std::cout << arr[i*h + j] << ' ';
+// const auto sigmas = {10., 50., 100., 500., 1000., 2000., 5000.};
+// const auto lambdas = {1., 1.5, 2., 2.5, 3.};
+// const auto resolutions = {1000u};
+
+int batch_segment(
+        Segmenter* segmenter,
+        unsigned dims,
+        const unsigned* shape,
+        std::byte* in_data,
+        const unsigned* in_strides,
+        std::byte* out_data,
+        const unsigned* out_strides) {
+    std::cout << "Segmenting using " << segmenter->name() << '\n';
+    const NDArray<double> in_image{in_data, dims, shape, in_strides};
+    NDArray<long> out_image{out_data, dims, shape, out_strides};
+
+    // segment single image
+    if (dims == 2) {
+        std::cout << "segmenting single image ... "; std::cout.flush();
+        segmenter->segment(in_image, out_image);
+        std::cout << "done" << std::endl;
+    // segment batch of images
+    } else if (dims == 3) {
+        std::cout << "segmenting batch of " << in_image.shape(0) << " images\n";
+        for (unsigned i = 0; i < in_image.shape(0); ++i) {
+            std::cout << "\tsegmenting image " << i+1 << '/' << in_image.shape(0) << " ... ";
+            std::cout.flush();
+            NDArray<long> out_slice = out_image.slice(i);
+            segmenter->segment(in_image.slice(i), out_slice);
+            std::cout << "done" << std::endl;
         }
-        std::cout << '\n';
+    } else {
+        std::cout << "cannot segment " << dims << "-dimensional batch\n";
+        return 1;
     }
-    std::cout.flush();
     return 0;
 }
 
-extern "C" int rbf_log_segment(double sigma, double lambda, unsigned resolution) {
+extern "C" int rbf_log_segment(
+        double sigma,
+        double lambda,
+        unsigned resolution,
+        unsigned dims,
+        const unsigned* shape,
+        std::byte* in_data,
+        const unsigned* in_strides,
+        std::byte* out_data,
+        const unsigned* out_strides) {
     RBFLogSegmenter segmenter{sigma, lambda, resolution};
-    std::cout << "segmenting using " << (&segmenter)->name() << std::endl;
-    return 0;
-}
-
-void batch_segmentation() {
-    const auto total_start = std::chrono::high_resolution_clock::now();
-
-    const auto sigmas = {10., 50., 100., 500., 1000., 2000., 5000.};
-    const auto lambdas = {1., 1.5, 2., 2.5, 3.};
-    const auto resolutions = {1000u};
-    std::vector<Segmenter*> segmenters;
-    segmenters.reserve(sigmas.size() * lambdas.size() * resolutions.size());
-    for (double sigma : sigmas) {
-        for (double lambda : lambdas) {
-            for (unsigned res : resolutions)
-                segmenters.push_back(new RBFLogSegmenter(sigma, lambda, res));
-        }
-    }
-
-    std::vector<OutImage> out_images(N_IMAGES, OutImage(N, -1));
-
-    std::ios_base::sync_with_stdio(false);
-
-    std::cout << "loading images ... "; std::cout.flush();
-    auto start = std::chrono::high_resolution_clock::now();
-    std::vector<InImage> images = load_images(IN_FILENAME);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> seconds = end - start;
-    std::cout << "done in " << seconds.count() << " seconds" << std::endl;
-
-    unsigned si = 0;
-    for (Segmenter* segmenter : segmenters) {
-        std::cout << ++si << '/' << segmenters.size() << " segmenting with "
-            << segmenter->name() << " ... ";
-        std::cout.flush();
-        start = std::chrono::high_resolution_clock::now();
-        for (unsigned i = 0; i < images.size(); ++i) {
-            segmenter->segment(images[i], out_images[i]);
-        }
-        save_images(out_images, segmentation_filename(segmenter->name()));
-        end = std::chrono::high_resolution_clock::now();
-        seconds = end - start;
-        std::cout << "done in " << seconds.count() << " seconds ("
-            << seconds.count() / images.size() << " per image)" << std::endl;
-        delete segmenter;
-    }
-
-
-    seconds = end - total_start;
-    std::cout << "Total: " << seconds.count() << " seconds ("
-        << seconds.count() / segmenters.size() << " per segmenter)\n";
+    return batch_segment(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
 }
