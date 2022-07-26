@@ -36,6 +36,8 @@ def visualize(predictions: Images, segmentations: dict[str, Images]) -> None:
     ):
         ax.title.set_text(segmenter)
         cut_images.append(ax.imshow(segs[curr_image, :, :]))
+    # add colorbar
+    fig.colorbar(round_image)
 
     def show_image() -> None:
         pred_image.set_data(predictions[curr_image, :, :])

@@ -51,5 +51,7 @@ extern "C" int rbf_log_segment(
         std::byte* out_data,
         const unsigned* out_strides) {
     RBFLogSegmenter segmenter{sigma, lambda, resolution};
-    return batch_segment(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
+    int ret = batch_segment(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
+    std::cout << "greatest absolute pixel difference was " << segmenter.max_absdiff << std::endl;
+    return ret;
 }

@@ -1,6 +1,9 @@
 #include "segmenter.hpp"
+#include <fstream>
 
 void Segmenter::segment(const NDArray<double>& in_image, NDArray<long>& out_image) {
+    std::ofstream cap_file("capacities");
+    std::clog.rdbuf(cap_file.rdbuf());
     m_image = in_image;
     const unsigned W = in_image.shape(0);
     const unsigned H = in_image.shape(1);
@@ -65,7 +68,7 @@ void Segmenter::segment(const NDArray<double>& in_image, NDArray<long>& out_imag
     // set result image
     for (unsigned i = 0; i < W; ++i) {
         for (unsigned j = 0; j < H; ++j) {
-            out_image(i, j) = visited[index(i, j)] ? 1 : 0;
+            out_image(i, j) = visited[index(i, j)] ? 0l : 1l;
         }
     }
 }

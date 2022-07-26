@@ -34,18 +34,18 @@ def rbf_log_segment(
 
 def main() -> None:
     images = np.load("../../data/predictions.npy")
-    images = np.array(
-        [
-            [
-                [0, 0, 0, 0, 0, 0],
-                [0, 1, 1, 0, 0, 0],
-                [0, 1, 1, 0, 0, 0],
-                [0, 1, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0],
-            ]
-        ]
-    )
+    #  images = np.array(
+    #      [
+    #          [
+    #              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+    #              [0.1, 0.1, 0.9, 0.9, 0.1, 0.1],
+    #              [0.1, 0.1, 0.9, 0.4, 0.1, 0.1],
+    #              [0.1, 0.1, 0.9, 0.9, 0.1, 0.1],
+    #              [0.6, 0.1, 0.9, 0.1, 0.1, 0.1],
+    #              [0.1, 0.1, 0.9, 0.9, 0.1, 0.1],
+    #          ]
+    #      ]
+    #  )
     images = images[0, :, :].reshape((1, *images.shape[1:]))
     segmentations = {
         f"s{sigma}_l{lambd}_r{res}": rbf_log_segment(sigma, lambd, res, images)
