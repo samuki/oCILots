@@ -8,6 +8,7 @@ import os
 import config
 import shutil
 import logging
+from sklearn.metrics import f1_score
 
 def make_log_dir(dt):
     os.makedirs(dt)
@@ -101,6 +102,24 @@ def patch_accuracy_fn(y_hat, y):
         > config.CUTOFF
     )
     return (patches == patches_hat).float().mean()
+
+def patch_f1_fn(y_hat, y):
+    # computes f1 weighted by patches (metric used on Kaggle for evaluation)
+    h_patches = y.shape[-2] // config.PATCH_SIZE
+    w_patches = y.shape[-1] // config.PATCH_SIZE
+    patches_hat = (
+        y_hat.reshape(
+            -1, 1, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE
+        ).mean((-1, -3))
+        > config.CUTOFF
+    )
+    patches = (
+        y.reshape(
+            -1, 1, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE
+        ).mean((-1, -3))
+        > config.CUTOFF
+    )
+    return f1_score(patches.flatten().cpu(), patches_hat.flatten().cpu(), average='weighted')
 
 
 def image_to_patches(images, masks=None):

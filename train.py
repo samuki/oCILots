@@ -42,6 +42,7 @@ def train(
 
             if  config.GRAD_ACCUM > 1:
                 loss = loss/config.GRAD_ACCUM
+                #loss = loss
             
             loss.backward()  # backward pass
             if (i + 1) % config.GRAD_ACCUM == 0:
