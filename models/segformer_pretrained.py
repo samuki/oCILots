@@ -11,7 +11,7 @@ class SegFormerPretrained(nn.Module):
     def __init__(self):
         super().__init__()
         # define model
-        self.model = SegformerForSemanticSegmentation.from_pretrained("nvidia/mit-b0",
+        self.model = SegformerForSemanticSegmentation.from_pretrained("nvidia/mit-b5",
                                                                 num_labels=1, 
         )
 
@@ -19,7 +19,8 @@ class SegFormerPretrained(nn.Module):
 
     def forward(self, x):
         #out = F.normalize(x)
-        out = self.model(x).logits 
+        result = self.model(x)
+        out = result.logits 
         out = F.interpolate(out, size = x.shape[-2:], mode='bilinear', align_corners=True)
         out = self.activation(out)
         return out

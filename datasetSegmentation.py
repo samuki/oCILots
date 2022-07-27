@@ -19,7 +19,7 @@ class SemanticSegmentationDataset(torch.utils.data.Dataset):
         self.train = train
         self.device = device
 
-        sub_path = "training" if self.train else "validation"
+        sub_path = "trainingEth" if self.train else "validation"
         self.img_dir = os.path.join(self.root_dir, sub_path, "images" )
         self.ann_dir = os.path.join(self.root_dir, sub_path, "groundtruth")
         
@@ -57,8 +57,7 @@ class SemanticSegmentationDataset(torch.utils.data.Dataset):
         if len(groundtruth.shape) == 3:
             groundtruth = groundtruth[:, :, 0]
 
-        groundtruth = torch.moveaxis(groundtruth, 0, -1)
-
+        # groundtruth = torch.moveaxis(groundtruth, 0, -1)
         # print("image ", image.shape, " groundtruth ", groundtruth.shape)
 
         return image.type(torch.FloatTensor).to(self.device), groundtruth.type(torch.FloatTensor).to(self.device)

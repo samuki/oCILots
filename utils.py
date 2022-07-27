@@ -8,6 +8,7 @@ import os
 import config
 import shutil
 import logging
+import sklearn 
 
 def make_log_dir(dt):
     os.makedirs(dt)
@@ -84,6 +85,28 @@ def show_val_samples(x, y, y_hat, segmentation=False):
     plt.show()
 
 
+
+def patch_f1_fn(y_hat, y):
+    # computes accuracy weighted by patches (metric used on Kaggle for evaluation)
+    h_patches = y.shape[-2] // config.PATCH_SIZE
+    w_patches = y.shape[-1] // config.PATCH_SIZE
+    patches_hat = (
+        y_hat.reshape(
+            -1, 1, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE
+        ).mean((-1, -3))
+        > config.CUTOFF
+    ).int()
+
+    patches = (
+        y.reshape(
+            -1, 1, h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE
+        ).mean((-1, -3))
+        > config.CUTOFF
+    ).int()
+
+    return sklearn.metrics.f1_score(patches_hat.cpu().numpy().flatten(), patches.cpu().numpy().flatten(), average="weighted")
+
+
 def patch_accuracy_fn(y_hat, y):
     # computes accuracy weighted by patches (metric used on Kaggle for evaluation)
     h_patches = y.shape[-2] // config.PATCH_SIZE
@@ -100,6 +123,7 @@ def patch_accuracy_fn(y_hat, y):
         ).mean((-1, -3))
         > config.CUTOFF
     )
+
     return (patches == patches_hat).float().mean()
 
 

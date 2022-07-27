@@ -1,18 +1,20 @@
+
 from glob import glob
 import cv2
 import numpy as np
 import torch
+
 import config
 from train import train
 import utils
+
 from models.unet_new import UNet
-from models.segformer import Segformer
+
 from models.segformer_pretrained import SegFormerPretrained
 
 import dataset
-import datasetSegmentation
 import datetime
-from transformers import SegformerFeatureExtractor
+import torchvision
 
 
 def main():
@@ -22,9 +24,10 @@ def main():
     utils.make_log_dir(dt_string)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # reshape the image to simplify the handling of skip connections and maxpooling
-   
+    
+    """
     feature_extractor = SegformerFeatureExtractor(reduce_labels=False, size=400)
-
+    
     train_dataset = datasetSegmentation.SemanticSegmentationDataset(
         feature_extractor=feature_extractor, device=device
     )
@@ -32,11 +35,11 @@ def main():
     val_dataset = datasetSegmentation.SemanticSegmentationDataset(
         feature_extractor=feature_extractor, train=False, device=device
     )
-   
     """
+    
     if config.USE_AUGMENTATIONS:
         train_dataset = dataset.FlexibleDataset(
-            "data/training",
+            "data/trainingBigBig",
             device,
             use_patches=False,
             resize_to=(config.HEIGHT, config.WIDTH),
@@ -56,8 +59,7 @@ def main():
         val_dataset = dataset.ImageDataset(
             "data/validation", device, use_patches=False, resize_to=(384, 384)
         )
-    """
-
+    
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
@@ -65,13 +67,14 @@ def main():
         val_dataset, batch_size=config.BATCH_SIZE, shuffle=True
     )
     # model = UNet().to(device)
-
-    model = SegFormerPretrained().to(device)
     
+    model = SegFormerPretrained().to(device)
     
     loss_fn = config.LOSS
     metric_fns = config.METRICS
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0000001)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.00006)
+    
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     n_epochs = config.EPOCHS
     train(
         train_dataloader,
@@ -97,6 +100,15 @@ def main():
     )
     test_images = test_images[:, :, :, :3]
     test_images = utils.np_to_tensor(np.moveaxis(test_images, -1, 1), device)
+
+
+    transform = torchvision.transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
+        )
+
+    test_images = transform(test_images)
+
     test_pred = [model(t).detach().cpu().numpy() for t in test_images.unsqueeze(1)]
     test_pred = np.concatenate(test_pred, 0)
     test_pred = np.moveaxis(test_pred, 1, -1)  # CHW to HWC
@@ -122,3 +134,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
