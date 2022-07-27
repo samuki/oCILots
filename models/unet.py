@@ -5,27 +5,9 @@ from torch import nn
 from tqdm.notebook import tqdm
 
 
-class Block(nn.Module):
-    # a repeating structure composed of two convolutional layers with batch normalization and ReLU activations
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
-        self.block = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm2d(out_ch),
-            nn.Conv2d(
-                in_channels=out_ch, out_channels=out_ch, kernel_size=3, padding=1
-            ),
-            nn.ReLU(),
-            nn.Conv2d(
-                in_channels=out_ch, out_channels=out_ch, kernel_size=3, padding=1
-            ),
-            nn.ReLU(),
-        )
-
-    def forward(self, x):
-        return self.block(x)
-
+"""
+This is a modified version of the UNet model from the example notebook for project 3.
+"""
 
 class UNet(nn.Module):
     # UNet-like architecture for single class semantic segmentation.
@@ -68,3 +50,27 @@ class UNet(nn.Module):
             x = torch.cat([x, feature], dim=1)  # concatenate skip features
             x = block(x)  # pass through the block
         return self.head(x)  # reduce to 1 channel
+
+
+class Block(nn.Module):
+    # a repeating structure composed of two convolutional layers with batch normalization and ReLU activations
+    def __init__(self, in_ch, out_ch):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(out_ch),
+            nn.Conv2d(
+                in_channels=out_ch, out_channels=out_ch, kernel_size=3, padding=1
+            ),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels=out_ch, out_channels=out_ch, kernel_size=3, padding=1
+            ),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        return self.block(x)
+
+

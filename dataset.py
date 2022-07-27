@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import utils
 import config
+import glob
 import albumentations as album
 import torchvision
 
@@ -30,10 +31,14 @@ class FlexibleDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, item):
         image = utils.load_from_path(self.x[item])[:, :, :3]
+<<<<<<< HEAD
         mask = utils.load_from_path(self.y[item])
         if len(mask.shape) == 3:
             mask = mask[:, :, 0]
 
+=======
+        mask = utils.load_from_path(self.y[item], grey=True)
+>>>>>>> origin/main
         if self.use_patches:  # split each image into patches
             image, mask = utils.image_to_patches(image, mask)
         if self.augmentation:
@@ -98,6 +103,21 @@ class ImageDataset(torch.utils.data.Dataset):
         return self.n_samples
 
 
+def load_test_data():
+    test_path = config.TEST_PATH
+    # predict on test set
+    test_filenames = glob.glob(test_path + "/*.png")
+    test_images = utils.load_all_from_path(test_path)
+    size = test_images.shape[1:3]
+    # we also need to resize the test images. This might not be the best ideas depending on their spatial resolution.
+    test_images = np.stack(
+        [cv2.resize(img, dsize=(384, 384)) for img in test_images], 0
+    )
+    test_images = test_images[:, :, :, :3]
+    test_images = utils.np_to_tensor(np.moveaxis(test_images, -1, 1), config.DEVICE)
+    return test_images, size, test_filenames
+
+
 def training_augmentation():
     train_transform = [
         album.RandomCrop(height=config.HEIGHT, width=config.WIDTH, always_apply=True),
@@ -106,7 +126,6 @@ def training_augmentation():
                 album.HorizontalFlip(p=1),
                 album.VerticalFlip(p=1),
                 album.RandomRotate90(p=1),
-                album.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1)
             ],
             p=config.p_augment),
         album.OneOf([
@@ -118,19 +137,22 @@ def training_augmentation():
         album.OneOf([
                 album.OpticalDistortion(p=1),
                 album.GridDistortion(p=1),
+                album.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=1),
         ], p=config.p_augment),
         
         album.OneOf([
             album.RandomContrast(limit=.6, p=1),
             album.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=1),
             album.RandomBrightness(limit=0.2, p=1)
-        ], p=config.p_augment), 
+        ], p=config.p_augment),
+        album.RandomBrightnessContrast(p=config.p_augment),    
+        album.RandomGamma(p=config.p_augment)
     ]
     return album.Compose(train_transform)
 
 
 def validation_augmentation():
     test_transform = [
-        album.RandomCrop(height=config.HEIGHT, width=config.WIDTH, always_apply=True),
+        album.CenterCrop(height=config.MINHEIGHT, width=config.MINWIDTH, always_apply=True),
     ]
     return album.Compose(test_transform)

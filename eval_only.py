@@ -5,20 +5,34 @@ import torch
 import config
 from train import train
 import utils
+<<<<<<< HEAD
 from models.segformer_pretrained import SegFormerPretrained
 
 import dataset
 import datetime
 import torchvision
+=======
+from models.unet_new import UNet
+from models.segformer import Segformer
+import dataset
+import datetime
+>>>>>>> origin/main
 
 
 def main():
     # log training
     now = datetime.datetime.now()
+<<<<<<< HEAD
     model_path = './results/24072022_18:35:49'
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = SegFormerPretrained().to(device)
+=======
+    model_path = './results/16072022_09:35:56'
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    model = UNet().to(device)
+>>>>>>> origin/main
 
     model.load_state_dict(torch.load(model_path+'/model.pth'))
     model.eval()
@@ -32,6 +46,7 @@ def main():
         [cv2.resize(img, dsize=(384, 384)) for img in test_images], 0
     )
     test_images = test_images[:, :, :, :3]
+<<<<<<< HEAD
 
     transform = torchvision.transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -42,6 +57,9 @@ def main():
 
     test_images = transform(test_images)
 
+=======
+    test_images = utils.np_to_tensor(np.moveaxis(test_images, -1, 1), device)
+>>>>>>> origin/main
     test_pred = [model(t).detach().cpu().numpy() for t in test_images.unsqueeze(1)]
     test_pred = np.concatenate(test_pred, 0)
     test_pred = np.moveaxis(test_pred, 1, -1)  # CHW to HWC
@@ -61,7 +79,11 @@ def main():
     test_pred = np.moveaxis(test_pred, 2, 3)
     test_pred = np.round(np.mean(test_pred, (-1, -2)) > config.CUTOFF)
     utils.create_submission(
+<<<<<<< HEAD
         test_pred, test_filenames, submission_filename=model_path + "/submission2.csv"
+=======
+        test_pred, test_filenames, submission_filename=model_path + "/submission.csv"
+>>>>>>> origin/main
     )
 
 

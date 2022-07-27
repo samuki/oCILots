@@ -8,7 +8,7 @@ import os
 import config
 import shutil
 import logging
-import sklearn 
+from sklearn.metrics import f1_score
 
 def make_log_dir(dt):
     os.makedirs(dt)
@@ -26,10 +26,10 @@ def load_all_from_path(path):
     )
 
 
-def load_from_path(path):
+def load_from_path(path, grey=False):
     # loads all HxW .pngs contained in path as a 4D np.array of shape (n_images, H, W, 3)
     # images are loaded as floats with values in the interval [0., 1.]
-    return np.array(Image.open(path)).astype(np.float32) / 255.0
+    return np.array(Image.open(path).convert('L' if grey else "RGB")).astype(np.float32) / 255.0
 
 
 def show_first_n(imgs, masks, n=5):
@@ -104,7 +104,7 @@ def patch_f1_fn(y_hat, y):
         > config.CUTOFF
     ).int()
 
-    return sklearn.metrics.f1_score(patches_hat.cpu().numpy().flatten(), patches.cpu().numpy().flatten(), average="weighted")
+    return f1_score(patches_hat.cpu().numpy().flatten(), patches.cpu().numpy().flatten(), average="weighted")
 
 
 def patch_accuracy_fn(y_hat, y):
@@ -252,3 +252,15 @@ def save_if_best_model(model, save_dir, epoch, current, best_stats, logger):
         torch.save(model.state_dict(), save_dir + "/model.pth")
         logger.info("Saved model")
     return best_stats
+
+
+def learning_rate(optimizer, base_lr, max_iters,
+        cur_iters, warmup_iter=None, power=0.9):
+    if warmup_iter is not None and cur_iters < warmup_iter:
+        lr = base_lr * cur_iters / (warmup_iter + 1e-8)
+    elif warmup_iter is not None:
+        lr = base_lr*((1-float(cur_iters - warmup_iter) / (max_iters - warmup_iter))**(power))
+    else:
+        lr = base_lr * ((1 - float(cur_iters / max_iters)) ** (power))
+    optimizer.param_groups[0]['lr'] = lr
+    return lr

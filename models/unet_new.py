@@ -6,7 +6,13 @@ import torch.nn.functional as F
 from timm import create_model
 from typing import Optional, List
 
-# adopted from https://gist.github.com/rwightman/f8b24f4e6f5504aba03e999e02460d31
+
+""" 
+This is a modfied version from the Unet Model using the TIMM library.
+For reference please see the following link: 
+    https://gist.github.com/rwightman/f8b24f4e6f5504aba03e999e02460d31
+
+"""
 
 
 class UNet(nn.Module):
@@ -155,7 +161,6 @@ class UnetDecoder(nn.Module):
         )
 
         self.activation = torch.nn.Sigmoid()
-
 
         self._init_weight()
 

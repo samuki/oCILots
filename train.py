@@ -5,11 +5,12 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils import show_val_samples
 import utils
-
+import config
 def train(
     train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs, save_dir
 ):
     # training loop
+    lr = config.start_lr
     logdir = "./results/tensorboard/net"
     logger = utils.make_logger(save_dir+"/logs.txt")
     logger.info('Starting')
@@ -28,13 +29,26 @@ def train(
         pbar = tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{n_epochs}")
         # training
         model.train()
-        for (x, y) in pbar:
+        for i, (x, y) in enumerate(pbar):
+            # configure custom scheduler in config
+            
+            if config.use_custom_lr_scheduler:
+                lr = utils.learning_rate(optimizer, lr, train_dataloader.dataset.n_samples,
+                i, warmup_iter=config.warm_up_epochs, power=0.9)
             y = torch.squeeze(y)
             optimizer.zero_grad()  # zero out gradients
             y_hat = torch.squeeze(model(x))  # forward pass
+
             loss = loss_fn(y_hat, y)
+
+            if  config.GRAD_ACCUM > 1:
+                loss = loss/config.GRAD_ACCUM
+                #loss = loss
+            
             loss.backward()  # backward pass
-            optimizer.step()  # optimize weights
+            if (i + 1) % config.GRAD_ACCUM == 0:
+                optimizer.step()  # optimize weights
+                optimizer.zero_grad()
 
             # log partial metrics
             metrics["loss"].append(loss.item())
@@ -70,11 +84,11 @@ def train(
                 ]
             )
         )
-        show_val_samples(
-            x.detach().cpu().numpy(),
-            y.detach().cpu().numpy(),
-            y_hat.detach().cpu().numpy(),
-        )
+        #show_val_samples(
+        #    x.detach().cpu().numpy(),
+        #    y.detach().cpu().numpy(),
+        #    y_hat.detach().cpu().numpy(),
+        #)
 
     print("Finished Training")
     # plot loss curves
