@@ -6,8 +6,6 @@ template<typename InPixel, typename Capacity, typename OutPixel>
 void Segmenter<InPixel, Capacity, OutPixel>::segment(
         const NDArray<InPixel>& in_image,
         NDArray<OutPixel>& out_image) {
-    // std::ofstream cap_file("capacities");
-    // std::clog.rdbuf(cap_file.rdbuf());
     m_image = in_image;
     const unsigned W = in_image.shape(0);
     const unsigned H = in_image.shape(1);

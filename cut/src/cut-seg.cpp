@@ -18,25 +18,25 @@ int batch_segment(
         const unsigned* in_strides,
         std::byte* out_data,
         const unsigned* out_strides) {
-    std::cout << "Segmenting using " << segmenter->name() << '\n';
+    // std::cout << "Segmenting using " << segmenter->name() << '\n';
     const NDArray<InPixel> in_image{in_data, dims, shape, in_strides};
     NDArray<OutPixel> out_image{out_data, dims, shape, out_strides};
 
     // segment single image
     if (dims == 2) {
-        std::cout << "segmenting single image ... "; std::cout.flush();
+        // std::cout << "segmenting single image ... "; std::cout.flush();
         segmenter->segment(in_image, out_image);
-        std::cout << "done" << std::endl;
+        // std::cout << "done" << std::endl;
     // segment batch of images
     } else if (dims == 3) {
-        std::cout << "segmenting batch of " << in_image.shape(0) << " images\n";
+        // std::cout << "segmenting batch of " << in_image.shape(0) << " images\n";
         for (unsigned i = 0; i < in_image.shape(0); ++i) {
-            std::cout << "\tsegmenting image " << i+1 << '/' << in_image.shape(0) << " ... ";
-            std::cout.flush();
+            // std::cout << "\tsegmenting image " << i+1 << '/' << in_image.shape(0) << " ... ";
+            // std::cout.flush();
             const NDArray<InPixel> in_slice = in_image.slice(i);
             NDArray<OutPixel> out_slice = out_image.slice(i);
             segmenter->segment(in_slice, out_slice);
-            std::cout << "done" << std::endl;
+            // std::cout << "done" << std::endl;
         }
     } else {
         std::cout << "cannot segment " << dims << "-dimensional batch\n";

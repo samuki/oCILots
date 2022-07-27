@@ -1,26 +1,19 @@
 import ctypes
+import sys
+import time
 import numpy as np
 from visualize import visualize
 
 LIB = ctypes.CDLL("./include/cut-seg.so")
 
 
-def to_ctypes(x: np.ndarray):
-    return (
-        x.ctypes.data_as(ctypes.c_void_p),
-        ctypes.c_uint(x.ndim),
-        x.ctypes.shape_as(ctypes.c_uint),
-        x.ctypes.strides_as(ctypes.c_uint),
-    )
-
-
 def rbf_log_segment(
-    sigma: float, lambd: float, resolution: int, images: np.ndarray
+    images: np.ndarray, *, sigma: float, lambd: float, resolution: int
 ) -> np.ndarray:
-    segmentations = np.empty_like(images, dtype=np.int64)
+    segmentations = np.empty_like(images, dtype=np.int32)
     LIB.rbf_log_segment(
-        ctypes.c_double(sigma),
-        ctypes.c_double(lambd),
+        ctypes.c_float(sigma),
+        ctypes.c_float(lambd),
         ctypes.c_uint(resolution),
         ctypes.c_uint(images.ndim),
         images.ctypes.shape_as(ctypes.c_uint),
@@ -32,29 +25,33 @@ def rbf_log_segment(
     return segmentations
 
 
+def segment(images: np.ndarray, method: str, *, benchmark: bool = False, **kwargs):
+    if benchmark:
+        start = time.perf_counter()
+        print(f"segmenting with {method}{kwargs} ... ", end="")
+        sys.stdout.flush()
+    if method == "rbf-log":
+        seg = rbf_log_segment(images, **kwargs)
+    else:
+        raise ValueError(f"unknown method '{method}'")
+    if benchmark:
+        end = time.perf_counter()
+        print(f"done in {end-start:.4f} seconds")
+    return seg
+
+
 def main() -> None:
     images = np.load("../../data/predictions.npy")
-    #  images = np.array(
-    #      [
-    #          [
-    #              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-    #              [0.1, 0.1, 0.9, 0.9, 0.1, 0.1],
-    #              [0.1, 0.1, 0.9, 0.4, 0.1, 0.1],
-    #              [0.1, 0.1, 0.9, 0.9, 0.1, 0.1],
-    #              [0.6, 0.1, 0.9, 0.1, 0.1, 0.1],
-    #              [0.1, 0.1, 0.9, 0.9, 0.1, 0.1],
-    #          ]
-    #      ]
-    #  )
-    #  images = images[:, 52:56, 2:6]
-    images = images[0, :, :].reshape((1, *images.shape[1:]))
+    #  images = images[0, :, :].reshape((1, *images.shape[1:]))
     segmentations = {
-        f"s{sigma}_l{lambd}_r{res}": rbf_log_segment(sigma, lambd, res, images)
-        for sigma in (1.0,)
-        for lambd in (1.0,)
+        f"s{sigma}_l{lambd}_r{res}": segment(
+            images, "rbf-log", sigma=sigma, lambd=lambd, resolution=res, benchmark=True
+        )
+        for sigma in (0.1, 1.0, 10.0)
+        for lambd in (0.1, 1.0, 10.0)
         for res in (100,)
     }
-    visualize(images, segmentations)
+    visualize(images, segmentations, show=True)
 
 
 if __name__ == "__main__":

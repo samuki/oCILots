@@ -1,3 +1,4 @@
+from typing import Optional
 import itertools
 import math
 import numpy as np
@@ -14,7 +15,13 @@ PREDICTIONS_FILENAME_NPY = "../../data/predictions.npy"
 Images = NDArray[Shape["144, 400, 400"], Float]
 
 
-def visualize(predictions: Images, segmentations: dict[str, Images]) -> None:
+def visualize(
+    predictions: Images,
+    segmentations: dict[str, Images],
+    *,
+    show: bool = True,
+    save: Optional[str] = None,
+) -> None:
     # load prediction & segmentation images
     n_segmentations = len(segmentations)
     n_subplots = n_segmentations + 2
@@ -69,5 +76,8 @@ def visualize(predictions: Images, segmentations: dict[str, Images]) -> None:
     left_button.clicked.connect(left_callback)
     right_button.clicked.connect(right_callback)
 
-    fig.show()
-    plt.show()
+    if show:
+        fig.show()
+        plt.show()
+    if save is not None:
+        fig.savefig(save)

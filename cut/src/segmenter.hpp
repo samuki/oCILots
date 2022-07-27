@@ -62,8 +62,6 @@ class RBFLogSegmenter : public Segmenter<InPixel, Capacity, OutPixel> {
 private:
     const InPixel m_lambda;
     const InPixel m_sigma;
-public:
-    mutable InPixel max_absdiff = -1.;
 
 public:
     RBFLogSegmenter(InPixel sigma, InPixel lambda, unsigned resolution)
@@ -80,23 +78,16 @@ protected:
     Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const {
         const InPixel diff = this->m_image(i1, j1) - this->m_image(i2, j2);
         const InPixel cap = exp(-0.5 * diff * diff / m_sigma);
-        // std::clog << "interior capacity " << m_image(i1, j1) << " - " << m_image(i2, j2)
-        //     << " => " << cap << " => " << discretize(cap) << '\n';
-        max_absdiff = std::max(max_absdiff, std::abs(diff));
         return this->discretize(cap);
     }
 
     Capacity edge_weight_s(unsigned i, unsigned j) const {
         const InPixel cap = - m_lambda * log(this->m_image(i, j));
-        // std::clog << "source capacity " << m_image(i, j) << " => " << cap
-        //     << " => " << discretize(cap) << '\n';
         return this->discretize(cap);
     }
 
     Capacity edge_weight_t(unsigned i, unsigned j) const {
         const InPixel cap = - m_lambda * log(1 - this->m_image(i, j));
-        // std::clog << "sink capacity " << m_image(i, j) << " => " << cap
-        //     << " => " << discretize(cap) << '\n';
         return this->discretize(cap);
     }
 };
