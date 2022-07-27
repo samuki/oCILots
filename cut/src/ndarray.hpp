@@ -49,20 +49,24 @@ public:
         return NDArray<T>(m_data + i*m_strides[0], m_dims-1, m_shape + 1, m_strides + 1);
     }
 
-    // inline void print() {
-    //     if (m_dims == 1) {
-    //         for (unsigned i = 0; i < m_shape[0]; ++i)
-    //             std::cout << *element(i) << ' ';
-    //     } else if (m_dims == 2) {
-    //         for (unsigned i = 0; i < m_shape[0]; ++i) {
-    //             for (unsigned j = 0; j < m_shape[1]; ++j) {
-    //                 std::cout << *element(i, j) << ' ';
-    //             }
-    //             std::cout << '\n';
-    //         }
-    //     } else {
-    //         std::cout << "Unable to print NDArray with " << m_dims << "dimensions";
-    //     }
-    //     std::cout << '\n';
-    // }
+    void describe() const {
+        std::cout << m_dims << "-array of shape ";
+        for (unsigned i = 0; i < m_dims; ++i)
+            std::cout << m_shape[i] << ' ';
+        std::cout << "and strides ";
+        for (unsigned i = 0; i < m_dims; ++i)
+            std::cout << m_strides[i] << ' ';
+        std::cout << std::endl;
+    }
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& s, const NDArray<T>& x) {
+    for (unsigned i = 0; i < x.shape(0); ++i) {
+        for (unsigned j = 0; j < x.shape(1); ++j) {
+            s << x(i, j) << ' ';
+        }
+        s << '\n';
+    }
+    return s;
+}

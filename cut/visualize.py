@@ -23,19 +23,21 @@ def visualize(predictions: Images, segmentations: dict[str, Images]) -> None:
     n_images = predictions.shape[0]
     curr_image = 0
 
+    cmap_args = {"cmap": "gray", "vmin": 0.0, "vmax": 1.0}
+
     # plot prediction heatmap and segmentation side-by-side
     fig, axs = plt.subplots(n_rows, n_rows, figsize=(16, 10), constrained_layout=True)
     pred_ax, round_ax = axs.flat[0], axs.flat[1]
     pred_ax.title.set_text("prediction")
     round_ax.title.set_text("rounded")
-    pred_image = pred_ax.imshow(predictions[curr_image, :, :])
-    round_image = round_ax.imshow(np.round(predictions[curr_image, :, :]))
+    pred_image = pred_ax.imshow(predictions[curr_image, :, :], **cmap_args)
+    round_image = round_ax.imshow(np.round(predictions[curr_image, :, :]), **cmap_args)
     cut_images = []
     for i, (ax, (segmenter, segs)) in enumerate(
         zip(itertools.islice(axs.flat, 2, None), segmentations.items())
     ):
         ax.title.set_text(segmenter)
-        cut_images.append(ax.imshow(segs[curr_image, :, :]))
+        cut_images.append(ax.imshow(segs[curr_image, :, :], **cmap_args))
     # add colorbar
     fig.colorbar(round_image)
 

@@ -1,13 +1,17 @@
-#include "util.hpp"
 #include "segmenter.hpp"
 #include "ndarray.hpp"
+#include <fstream>
 
 // const auto sigmas = {10., 50., 100., 500., 1000., 2000., 5000.};
 // const auto lambdas = {1., 1.5, 2., 2.5, 3.};
 // const auto resolutions = {1000u};
 
+using InPixel = float;
+using Capacity = unsigned long long;
+using OutPixel = unsigned;
+
 int batch_segment(
-        Segmenter* segmenter,
+        Segmenter<InPixel, Capacity, OutPixel>* segmenter,
         unsigned dims,
         const unsigned* shape,
         std::byte* in_data,
@@ -15,8 +19,8 @@ int batch_segment(
         std::byte* out_data,
         const unsigned* out_strides) {
     std::cout << "Segmenting using " << segmenter->name() << '\n';
-    const NDArray<double> in_image{in_data, dims, shape, in_strides};
-    NDArray<long> out_image{out_data, dims, shape, out_strides};
+    const NDArray<InPixel> in_image{in_data, dims, shape, in_strides};
+    NDArray<OutPixel> out_image{out_data, dims, shape, out_strides};
 
     // segment single image
     if (dims == 2) {
@@ -29,8 +33,9 @@ int batch_segment(
         for (unsigned i = 0; i < in_image.shape(0); ++i) {
             std::cout << "\tsegmenting image " << i+1 << '/' << in_image.shape(0) << " ... ";
             std::cout.flush();
-            NDArray<long> out_slice = out_image.slice(i);
-            segmenter->segment(in_image.slice(i), out_slice);
+            const NDArray<InPixel> in_slice = in_image.slice(i);
+            NDArray<OutPixel> out_slice = out_image.slice(i);
+            segmenter->segment(in_slice, out_slice);
             std::cout << "done" << std::endl;
         }
     } else {
@@ -41,8 +46,8 @@ int batch_segment(
 }
 
 extern "C" int rbf_log_segment(
-        double sigma,
-        double lambda,
+        InPixel sigma,
+        InPixel lambda,
         unsigned resolution,
         unsigned dims,
         const unsigned* shape,
@@ -50,8 +55,6 @@ extern "C" int rbf_log_segment(
         const unsigned* in_strides,
         std::byte* out_data,
         const unsigned* out_strides) {
-    RBFLogSegmenter segmenter{sigma, lambda, resolution};
-    int ret = batch_segment(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
-    std::cout << "greatest absolute pixel difference was " << segmenter.max_absdiff << std::endl;
-    return ret;
+    RBFLogSegmenter<InPixel, Capacity, OutPixel> segmenter{sigma, lambda, resolution};
+    return batch_segment(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
 }

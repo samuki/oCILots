@@ -46,11 +46,12 @@ def main() -> None:
     #          ]
     #      ]
     #  )
+    #  images = images[:, 52:56, 2:6]
     images = images[0, :, :].reshape((1, *images.shape[1:]))
     segmentations = {
         f"s{sigma}_l{lambd}_r{res}": rbf_log_segment(sigma, lambd, res, images)
-        for sigma in (1.,)
-        for lambd in (1.,)
+        for sigma in (1.0,)
+        for lambd in (1.0,)
         for res in (100,)
     }
     visualize(images, segmentations)
