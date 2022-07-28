@@ -82,15 +82,20 @@ protected:
     }
 
     Capacity edge_weight_s(unsigned i, unsigned j) const {
-        const InPixel cap = - m_lambda * log(this->m_image(i, j));
+        InPixel val = this->m_image(i, j);
+        val = std::min(val, static_cast<InPixel>(0.999));
+        const InPixel cap = - m_lambda * log(val);
         return this->discretize(cap);
     }
 
     Capacity edge_weight_t(unsigned i, unsigned j) const {
-        const InPixel cap = - m_lambda * log(1 - this->m_image(i, j));
+        InPixel val = this->m_image(i, j);
+        val = std::max(val, static_cast<InPixel>(0.001));
+        const InPixel cap = - m_lambda * log(1 - val);
         return this->discretize(cap);
     }
 };
 
 
 template class Segmenter<float, unsigned long long, unsigned>;
+template class Segmenter<double, unsigned long long, unsigned>;
