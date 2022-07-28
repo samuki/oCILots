@@ -21,19 +21,13 @@ int batch_segment(
 
     // segment single image
     if (dims == 2) {
-        // std::cout << "segmenting single image ... "; std::cout.flush();
         segmenter->segment(in_image, out_image);
-        // std::cout << "done" << std::endl;
     // segment batch of images
     } else if (dims == 3) {
-        // std::cout << "segmenting batch of " << in_image.shape(0) << " images\n";
         for (unsigned i = 0; i < in_image.shape(0); ++i) {
-            // std::cout << "\tsegmenting image " << i+1 << '/' << in_image.shape(0) << " ... ";
-            // std::cout.flush();
             const NDArray<InPixel> in_slice = in_image.slice(i);
             NDArray<OutPixel> out_slice = out_image.slice(i);
             segmenter->segment(in_slice, out_slice);
-            // std::cout << "done" << std::endl;
         }
     } else {
         std::cout << "cannot segment " << dims << "-dimensional batch\n";
@@ -67,5 +61,43 @@ extern "C" int rbf_log_segment_double(
         std::byte* out_data,
         const unsigned* out_strides) {
     RBFLogSegmenter<double, unsigned long long, unsigned> segmenter{sigma, lambda, resolution};
+    return batch_segment<double, unsigned long long, unsigned>(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
+}
+
+extern "C" int rbf_log_dir_segment_float(
+        float sigma,
+        float lambda,
+        float lambda_dir,
+        float white_cutoff,
+        int radius,
+        double delta_theta,
+        unsigned resolution,
+        unsigned dims,
+        const unsigned* shape,
+        std::byte* in_data,
+        const unsigned* in_strides,
+        std::byte* out_data,
+        const unsigned* out_strides) {
+    RBFLogDirectionSegmenter<float, unsigned long long, unsigned> segmenter{
+        sigma, lambda, lambda_dir, white_cutoff, radius, delta_theta, resolution};
+    return batch_segment<float, unsigned long long, unsigned>(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
+}
+
+extern "C" int rbf_log_dir_segment_double(
+        double sigma,
+        double lambda,
+        double lambda_dir,
+        double white_cutoff,
+        int radius,
+        double delta_theta,
+        unsigned resolution,
+        unsigned dims,
+        const unsigned* shape,
+        std::byte* in_data,
+        const unsigned* in_strides,
+        std::byte* out_data,
+        const unsigned* out_strides) {
+    RBFLogDirectionSegmenter<double, unsigned long long, unsigned> segmenter{
+        sigma, lambda, lambda_dir, white_cutoff, radius, delta_theta, resolution};
     return batch_segment<double, unsigned long long, unsigned>(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
 }

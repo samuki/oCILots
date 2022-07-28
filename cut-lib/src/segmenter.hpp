@@ -18,7 +18,6 @@ private:
           boost::property<boost::edge_capacity_t, Capacity,
           boost::property<boost::edge_residual_capacity_t, Capacity,
           boost::property<boost::edge_reverse_t, traits::edge_descriptor>>>>;
-    class edge_adder;
 
 protected:
     const unsigned m_resolution;
@@ -42,8 +41,8 @@ protected:
         return round(m_resolution * x);
     }
 
-    virtual void add_st_edges(edge_adder& adder);
-    virtual void add_neighbor_edges(edge_adder& adder);
+    virtual void add_st_edges();
+    virtual void add_neighbor_edges();
 
     virtual void build_graph();
 
@@ -51,7 +50,6 @@ protected:
     virtual Capacity edge_weight_s(unsigned i, unsigned j) const = 0;
     virtual Capacity edge_weight_t(unsigned i, unsigned j) const = 0;
 
-private:
     class edge_adder {
         graph &G;
     public:
@@ -111,5 +109,33 @@ protected:
 };
 
 
-template class Segmenter<float, unsigned long long, unsigned>;
-template class Segmenter<double, unsigned long long, unsigned>;
+template<typename InPixel, typename Capacity, typename OutPixel>
+class RBFLogDirectionSegmenter : public RBFLogSegmenter<InPixel, Capacity, OutPixel> {
+private:
+    InPixel m_lambda_dir;
+    InPixel m_white_cutoff;
+    int m_radius;
+    double m_delta_theta;
+
+public:
+    RBFLogDirectionSegmenter(
+            InPixel sigma,
+            InPixel lambda,
+            InPixel lambda_dir,
+            InPixel white_cutoff,
+            int radius,
+            double delta_theta,
+            unsigned resolution)
+        : RBFLogSegmenter<InPixel, Capacity, OutPixel>(sigma, lambda, resolution),
+          m_lambda_dir(lambda_dir),
+          m_white_cutoff(white_cutoff),
+          m_radius(radius),
+          m_delta_theta(delta_theta) {}
+
+    void add_direction_edges(typename Segmenter<InPixel, Capacity, OutPixel>::edge_adder& adder);
+    virtual void build_graph();
+};
+
+
+template class RBFLogDirectionSegmenter<float, unsigned long long, unsigned>;
+template class RBFLogDirectionSegmenter<double, unsigned long long, unsigned>;

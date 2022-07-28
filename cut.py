@@ -1,4 +1,5 @@
-from typing import Optional, Any, Callable
+from typing import Optional, Any, Callable, Sequence
+import abc
 import ctypes
 import sys
 import time
@@ -16,6 +17,124 @@ import utils
 LIB = ctypes.CDLL("./cut-lib/include/cut-seg.so")
 
 
+class Segmenter(abc.ABC):
+    resolution: int
+
+    def __init__(self, resolution: int) -> None:
+        self.resolution = resolution
+
+    @abc.abstractmethod
+    def __str__(self) -> str:
+        pass
+
+    @abc.abstractclassmethod
+    def segment(self, images: np.ndarray) -> np.ndarray:
+        pass
+
+    def __call__(self, images: np.ndarray) -> np.ndarray:
+        return self.segment(images)
+
+
+class RBFLogSegmenter(Segmenter):
+    sigma: float
+    lambd: float
+
+    def __init__(self, sigma: float, lambd: float, resolution: int) -> None:
+        super().__init__(resolution)
+        self.sigma = sigma
+        self.lambd = lambd
+
+    def __str__(self) -> str:
+        return f"RBFLog(sigma={self.sigma}, lambda={self.lambd}, res={self.resolution})"
+
+    def segment(self, images: np.ndarray) -> np.ndarray:  # type: ignore
+        segmentations = np.empty_like(images, dtype=np.int32)
+        sigma_ct: ctypes.c_float | ctypes.c_double
+        lambd_ct: ctypes.c_float | ctypes.c_double
+        if images.dtype == np.float32:
+            fn = LIB.rbf_log_segment_float
+            sigma_ct = ctypes.c_float(self.sigma)
+            lambd_ct = ctypes.c_float(self.lambd)
+        elif images.dtype == np.float64:
+            fn = LIB.rbf_log_segment_double
+            sigma_ct = ctypes.c_double(self.sigma)
+            lambd_ct = ctypes.c_double(self.lambd)
+        else:
+            raise ValueError(f"images have unknown datatype {images.dtype!r}")
+        fn(
+            sigma_ct,
+            lambd_ct,
+            ctypes.c_uint(self.resolution),
+            ctypes.c_uint(images.ndim),
+            images.ctypes.shape_as(ctypes.c_uint),
+            images.ctypes.data_as(ctypes.c_void_p),
+            images.ctypes.strides_as(ctypes.c_uint),
+            segmentations.ctypes.data_as(ctypes.c_void_p),
+            segmentations.ctypes.strides_as(ctypes.c_uint),
+        )
+        return segmentations
+
+
+class RBFLogDirSegmenter(RBFLogSegmenter):
+    lambd_dir: float
+    white_cutoff: float
+    radius: int
+    delta_theta: float
+
+    def __init__(
+        self,
+        sigma: float,
+        lambd: float,
+        lambd_dir: float,
+        white_cutoff: float,
+        radius: int,
+        delta_theta: float,
+        resolution: int,
+    ) -> None:
+        super().__init__(sigma, lambd, resolution)
+        self.lambd_dir = lambd_dir
+        self.white_cutoff = white_cutoff
+        self.radius = radius
+        self.delta_theta = delta_theta
+
+    def segment(self, images: np.ndarray) -> np.ndarray:  # type: ignore
+        segmentations = np.empty_like(images, dtype=np.int32)
+        sigma_ct: ctypes.c_float | ctypes.c_double
+        lambd_ct: ctypes.c_float | ctypes.c_double
+        lambd_dir_ct: ctypes.c_float | ctypes.c_double
+        white_cutoff_ct: ctypes.c_float | ctypes.c_double
+        if images.dtype == np.float32:
+            fn = LIB.rbf_log_dir_segment_float
+            sigma_ct = ctypes.c_float(self.sigma)
+            lambd_ct = ctypes.c_float(self.lambd)
+            lambd_dir_ct = ctypes.c_float(self.lambd_dir)
+            white_cutoff_ct = ctypes.c_float(self.white_cutoff)
+        elif images.dtype == np.float64:
+            fn = LIB.rbf_log_dir_segment_double
+            sigma_ct = ctypes.c_double(self.sigma)
+            lambd_ct = ctypes.c_double(self.lambd)
+            lambd_dir_ct = ctypes.c_double(self.lambd_dir)
+            white_cutoff_ct = ctypes.c_double(self.white_cutoff)
+        else:
+            raise ValueError(f"images have unknown datatype {images.dtype!r}")
+        fn(
+            sigma_ct,
+            lambd_ct,
+            lambd_dir_ct,
+            white_cutoff_ct,
+            ctypes.c_int(self.radius),
+            ctypes.c_double(self.delta_theta),
+            ctypes.c_uint(self.resolution),
+            ctypes.c_uint(images.ndim),
+            images.ctypes.shape_as(ctypes.c_uint),
+            images.ctypes.data_as(ctypes.c_void_p),
+            images.ctypes.strides_as(ctypes.c_uint),
+            segmentations.ctypes.data_as(ctypes.c_void_p),
+            segmentations.ctypes.strides_as(ctypes.c_uint),
+        )
+        return segmentations
+
+
 def plot(pred: np.ndarray, gt: np.ndarray, seg: np.ndarray):
     cmap_args = {"cmap": "gray", "vmin": 0.0, "vmax": 1.0}
     fig, axs = plt.subplots(1, 3, figsize=(16, 10), constrained_layout=True)
@@ -28,51 +147,6 @@ def plot(pred: np.ndarray, gt: np.ndarray, seg: np.ndarray):
     seg_ax.imshow(seg, **cmap_args)
     fig.show()
     plt.show()
-
-
-def rbf_log_segment(
-    images: np.ndarray, *, sigma: float, lambd: float, resolution: int
-) -> np.ndarray:
-    segmentations = np.empty_like(images, dtype=np.int32)
-    sigma_ct: ctypes.c_float | ctypes.c_double
-    lambd_ct: ctypes.c_float | ctypes.c_double
-    if images.dtype == np.float32:
-        fn = LIB.rbf_log_segment_float
-        sigma_ct = ctypes.c_float(sigma)
-        lambd_ct = ctypes.c_float(lambd)
-    elif images.dtype == np.float64:
-        fn = LIB.rbf_log_segment_double
-        sigma_ct = ctypes.c_double(sigma)
-        lambd_ct = ctypes.c_double(lambd)
-    else:
-        raise ValueError(f"images have unknown datatype {images.dtype!r}")
-    fn(
-        sigma_ct,
-        lambd_ct,
-        ctypes.c_uint(resolution),
-        ctypes.c_uint(images.ndim),
-        images.ctypes.shape_as(ctypes.c_uint),
-        images.ctypes.data_as(ctypes.c_void_p),
-        images.ctypes.strides_as(ctypes.c_uint),
-        segmentations.ctypes.data_as(ctypes.c_void_p),
-        segmentations.ctypes.strides_as(ctypes.c_uint),
-    )
-    return segmentations
-
-
-def segment(images: np.ndarray, method: str, *, benchmark: bool = False, **kwargs):
-    if benchmark:
-        start = time.perf_counter()
-        print(f"segmenting with {method}{kwargs} ... ", end="")
-        sys.stdout.flush()
-    if method == "rbf-log":
-        seg = rbf_log_segment(images, **kwargs)
-    else:
-        raise ValueError(f"unknown method '{method}'")
-    if benchmark:
-        end = time.perf_counter()
-        print(f"done in {end-start:.4f} seconds")
-    return seg
 
 
 def visualize(
@@ -171,41 +245,43 @@ def load_prediction_groundtruth(base_dir: str) -> tuple[np.ndarray, np.ndarray]:
 
 
 def validate_segmenters(
-    segmenters: list[tuple[str, dict[str, Any]]],
+    segmenters: Sequence[Segmenter],
     predictions: np.ndarray,
     groundtruths: np.ndarray,
     metric_fns: dict[str, Callable[[Any, Any], np.double]],
     *,
     rank_metric: Optional[str] = None,
-) -> tuple[str, dict[str, Any]]:
+) -> Segmenter:
     total_start = time.perf_counter()
-    groundtruths_tensor = torch.tensor(groundtruths.astype('float32'))
+    groundtruths_tensor = torch.tensor(groundtruths.astype("float32"))
     # run and validate all segmenters on all metrics
     n_segmenters = len(segmenters)
     metrics = {name: np.empty((n_segmenters,)) for name in metric_fns}
     metric_width = max(len(name) for name in metric_fns)
-    for i, (method, args) in enumerate(segmenters):
+    for i, segmenter in enumerate(segmenters):
         print(
-            f"{i+1:{len(str(n_segmenters))}d}/{n_segmenters}: {method}{args} ... ",
+            f"{i+1:{len(str(n_segmenters))}d}/{n_segmenters}: {segmenter!s} ... ",
             end="",
         )
         sys.stdout.flush()
         start = time.perf_counter()
-        segmentations = segment(predictions, method, **args).astype("float32")
+        segmentations = segmenter(predictions).astype("float32")
         segmentations_tensor = torch.tensor(segmentations)
         end = time.perf_counter()
         print(f"done in {end-start:.4f} seconds")
-        print(f"differ in {np.count_nonzero(segmentations[0]-groundtruths[0])} elements "
-              f"with max-diff {np.max(np.abs(segmentations[0]-groundtruths[0]))}")
+        print(
+            f"differ in {np.count_nonzero(segmentations[0]-groundtruths[0])} elements "
+            f"with max-diff {np.max(np.abs(segmentations[0]-groundtruths[0]))}"
+        )
         for name, fn in metric_fns.items():
             metric = fn(groundtruths_tensor, segmentations_tensor)
             metrics[name][i] = metric
             print(f"\t{name:{metric_width}s}  {metric}")
     # extract and print the best-performing one if a rank-metric is given
     if rank_metric is not None:
-        best_idx = np.argmax(metrics[rank_metric])
+        best_idx = int(np.argmax(metrics[rank_metric]))
         best = segmenters[best_idx]
-        print(f"Best: {best[0]}{best[1]} with {metrics[rank_metric][best_idx]}")
+        print(f"Best: {best!s} with {metrics[rank_metric][best_idx]}")
     end = time.perf_counter()
     print(f"Total time: {end-total_start:.4f} seconds")
     return best
@@ -216,10 +292,29 @@ def main() -> None:
         "results/28072022_15:48:50/training_predictions"
     )
     segmenters = [
-        ("rbf-log", {"sigma": sigma, "lambd": lambd, "resolution": res})
-        for sigma in (0.1, 1.0, 10.0)
+        RBFLogSegmenter(sigma=sigma, lambd=lambd, resolution=res)
+        #  for sigma in (0.1, 1.0, 10.0)
+        for sigma in (0.1,)
         for lambd in np.arange(start=0.1, stop=1.0, step=0.02)
-        for res in (100, 1000)
+        for lambd in (0.36,)
+        for res in (100,)
+    ] + [
+        RBFLogDirSegmenter(
+            sigma=sigma,
+            lambd=lambd,
+            lambd_dir=lambd_dir,
+            white_cutoff=cutoff,
+            radius=r,
+            delta_theta=dt,
+            resolution=res,
+        )
+        for sigma in (0.1, 1.0, 10.0)
+        for lambd in (0.1, 0.3, 0.5)
+        for lambd_dir in (0.1, 1, 10)
+        for cutoff in (0.25, 0.5, 0.75)
+        for r in (5, 10, 20)
+        for dt in (math.pi / 4, math.pi / 8)
+        for res in (100,)
     ]
     validate_segmenters(
         segmenters,
