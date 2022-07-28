@@ -97,6 +97,12 @@ class RBFLogDirSegmenter(RBFLogSegmenter):
         self.radius = radius
         self.delta_theta = delta_theta
 
+    def __str__(self) -> str:
+        return (
+            f"RBFLogDir(sig={self.sigma}, lam={self.lambd}, lam_dir={self.lambd_dir}, "
+            f"wc={self.white_cutoff}, r={self.radius}, dt={self.delta_theta})"
+        )
+
     def segment(self, images: np.ndarray) -> np.ndarray:  # type: ignore
         segmentations = np.empty_like(images, dtype=np.int32)
         sigma_ct: ctypes.c_float | ctypes.c_double
