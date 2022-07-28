@@ -4,22 +4,37 @@
 #include <cmath>
 #include <vector>
 #include <stack>
+#include <functional>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/push_relabel_max_flow.hpp>
 
 
 template<typename InPixel, typename Capacity, typename OutPixel>
 class Segmenter {
+private:
+    using traits = boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>;
+    using graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+          boost::no_property,
+          boost::property<boost::edge_capacity_t, Capacity,
+          boost::property<boost::edge_residual_capacity_t, Capacity,
+          boost::property<boost::edge_reverse_t, traits::edge_descriptor>>>>;
+    class edge_adder;
+
 protected:
     const unsigned m_resolution;
     NDArray<InPixel> m_image;
+    unsigned m_W, m_H;
+
+    graph m_G;
+    unsigned m_src, m_snk;
+    std::function<unsigned(unsigned, unsigned)> m_index;
 
     Segmenter(unsigned resolution)
         : m_resolution(resolution), m_image(nullptr, 0, nullptr, nullptr) {}
 
 public:
     virtual std::string name() const = 0;
-    void segment(const NDArray<InPixel>& in_image, NDArray<OutPixel>& out_image);
+    virtual void segment(const NDArray<InPixel>& in_image, NDArray<OutPixel>& out_image);
     virtual ~Segmenter() = default;
 
 protected:
@@ -27,17 +42,16 @@ protected:
         return round(m_resolution * x);
     }
 
+    virtual void add_st_edges(edge_adder& adder);
+    virtual void add_neighbor_edges(edge_adder& adder);
+
+    virtual void build_graph();
+
     virtual Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const = 0;
     virtual Capacity edge_weight_s(unsigned i, unsigned j) const = 0;
     virtual Capacity edge_weight_t(unsigned i, unsigned j) const = 0;
 
 private:
-    using traits = boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>;
-    using graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, boost::no_property,
-          boost::property<boost::edge_capacity_t, Capacity,
-          boost::property<boost::edge_residual_capacity_t, Capacity,
-          boost::property<boost::edge_reverse_t, traits::edge_descriptor>>>>;
-
     class edge_adder {
         graph &G;
     public:
