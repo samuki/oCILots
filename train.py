@@ -91,6 +91,9 @@ def train(
         #)
 
     print("Finished Training")
+
+
+    
     # plot loss curves
     plt.plot([v["loss"] for k, v in history.items()], label="Training Loss")
     plt.plot([v["val_loss"] for k, v in history.items()], label="Validation Loss")

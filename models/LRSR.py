@@ -4,6 +4,56 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 
+class LRSRModel(nn.Module):
+    """
+    downsample ratio=2
+    """
+
+    def __init__(self):
+        super(LRSRModel, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 3, 1, 1)
+        self.bn1 = nn.BatchNorm2d(6)
+        self.relu1 = nn.ReLU(True)
+
+        self.dl1 = DL(6, 12, [1, 2, 3])
+        self.dl2 = DL(12, 24, [1, 2, 3])
+        self.dl3 = DL(24, 48, [1, 2, 3])
+
+        self.resnet = nn.Sequential(
+            Residual(6, 6),
+            Residual(6, 6),
+            Residual(6, 6),
+        )
+        #
+
+        self.seb1 = UP(48, 24, 24)
+        self.seb2 = UP(24, 12, 12)
+        self.seb3 = UP(12, 6, 6)
+
+        self.map = nn.Conv2d(6, 1, 1)
+        self.activation = nn.Sigmoid()
+
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x1 = self.resnet(x1)
+        x1 = self.bn1(x1)
+        x1 = self.relu1(x1)
+
+        m1 = self.dl1(x1)
+
+        m2 = self.dl2(m1)
+
+        m3 = self.dl3(m2)
+
+        up1 = self.seb1(m3, m2)
+        up2 = self.seb2(up1, m1)
+        up3 = self.seb3(up2, x1)
+
+        out = self.map(up3)
+        out = self.activation(out)
+        return out
+
+
 class UP(nn.Module):
     def __init__(self, high_in_plane, low_in_plane, out_plane):
         super(UP, self).__init__()
@@ -207,51 +257,3 @@ class ResNet(nn.Module):
         return out
 
 
-class LRSRModel(nn.Module):
-    """
-    downsample ratio=2
-    """
-
-    def __init__(self):
-        super(LRSRModel, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 3, 1, 1)
-        self.bn1 = nn.BatchNorm2d(6)
-        self.relu1 = nn.ReLU(True)
-
-        self.dl1 = DL(6, 12, [1, 2, 3])
-        self.dl2 = DL(12, 24, [1, 2, 3])
-        self.dl3 = DL(24, 48, [1, 2, 3])
-
-        self.resnet = nn.Sequential(
-            Residual(6, 6),
-            Residual(6, 6),
-            Residual(6, 6),
-        )
-        #
-
-        self.seb1 = UP(48, 24, 24)
-        self.seb2 = UP(24, 12, 12)
-        self.seb3 = UP(12, 6, 6)
-
-        self.map = nn.Conv2d(6, 1, 1)
-        self.activation = nn.Sigmoid()
-
-    def forward(self, x):
-        x1 = self.conv1(x)
-        x1 = self.resnet(x1)
-        x1 = self.bn1(x1)
-        x1 = self.relu1(x1)
-
-        m1 = self.dl1(x1)
-
-        m2 = self.dl2(m1)
-
-        m3 = self.dl3(m2)
-
-        up1 = self.seb1(m3, m2)
-        up2 = self.seb2(up1, m1)
-        up3 = self.seb3(up2, x1)
-
-        out = self.map(up3)
-        out = self.activation(out)
-        return out

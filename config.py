@@ -3,7 +3,6 @@ from models.unet_new import UNet
 import utils
 import torch
 from models.LRSR import LRSRModel
-from models.unet_elu_crf import UNet
 #from models.swin_transformer import SwinTransformerPretrained
 #from models.maskformer import MaskformerPretrained
 
@@ -29,7 +28,15 @@ MINWIDTH = 384
 GRAD_ACCUM = 1
 
 # this add random crops of size HEIGHT x WIDTH and augmentations with p_augement. View dataset.__training_augmentation() for details
-USE_AUGMENTATIONS = True
+
+
+# Define whether input data should be augmented or not
+USE_AUGMENTATION = True
+
+# define whether the data should be normalized or not
+USE_NORMALIZATION = True
+
+# when using the augmented Dataset we need to specify the probability to apply augmentations to an image
 p_augment=0
 
 
@@ -54,7 +61,8 @@ CKPT_PATH="results/25072022_13:41:25"
 EPOCHS=10
 
 METRICS = {"acc": utils.accuracy_fn, "patch_acc": utils.patch_accuracy_fn, "f1_patch_acc": utils.patch_f1_fn}
-LOSS = torch.nn.MSELoss() 
+LOSS = torch.nn.MSELoss()
+
 
 # optimizer 
 OPTIMIZER=torch.optim.Adam(MODEL.parameters())
