@@ -135,6 +135,6 @@ def training_augmentation():
 
 def validation_augmentation():
     test_transform = [
-        album.RandomCrop(height=config.MINHEIGHT, width=config.MINWIDTH, always_apply=True),
+        album.CenterCrop(height=config.MINHEIGHT, width=config.MINWIDTH, always_apply=True),
     ]
     return album.Compose(test_transform)

@@ -37,9 +37,17 @@ def train(
             y = torch.squeeze(y)
             optimizer.zero_grad()  # zero out gradients
             y_hat = torch.squeeze(model(x))  # forward pass
+
             loss = loss_fn(y_hat, y)
+
+            if  config.GRAD_ACCUM > 1:
+                loss = loss/config.GRAD_ACCUM
+                #loss = loss
+            
             loss.backward()  # backward pass
-            optimizer.step()  # optimize weights
+            if (i + 1) % config.GRAD_ACCUM == 0:
+                optimizer.step()  # optimize weights
+                optimizer.zero_grad()
 
             # log partial metrics
             metrics["loss"].append(loss.item())
@@ -75,11 +83,11 @@ def train(
                 ]
             )
         )
-        show_val_samples(
-            x.detach().cpu().numpy(),
-            y.detach().cpu().numpy(),
-            y_hat.detach().cpu().numpy(),
-        )
+        #show_val_samples(
+        #    x.detach().cpu().numpy(),
+        #    y.detach().cpu().numpy(),
+        #    y_hat.detach().cpu().numpy(),
+        #)
 
     print("Finished Training")
     # plot loss curves
