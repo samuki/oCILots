@@ -5,7 +5,7 @@ import torch
 from models.LRSR import LRSRModel
 from models.unet_elu_crf import UNet
 #from models.swin_transformer import SwinTransformerPretrained
-#from models.maskformer import MaskformerPretrained
+from models.maskformer import MaskformerPretrained
 
 
 ###################################################### DATASET ######################################################
@@ -41,7 +41,8 @@ RANDOM_SEED=42
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # model
-MODEL = UNet().to(DEVICE)
+#MODEL = UNet().to(DEVICE)
+MODEL = MaskformerPretrained().to(DEVICE)
 #MODEL = SwinTransformerPretrained().to(DEVICE)
 #MODEL = MaskformerPretrained().to(DEVICE)
 #model = LRSRModel().to(DEVICE)
@@ -49,15 +50,16 @@ MODEL = UNet().to(DEVICE)
 
 # load ckpt to fine-tune
 LOAD_CKTP=False
-CKPT_PATH="results/25072022_13:41:25"
+CKPT_PATH="results/28072022_01:24:58/"
 
-EPOCHS=10
+EPOCHS=100
 
 METRICS={"acc": utils.accuracy_fn, "patch_acc": utils.patch_accuracy_fn, 'patch_f1_fn': utils.patch_f1_fn}
 LOSS=torch.nn.BCELoss()
 
 # optimizer 
-OPTIMIZER=torch.optim.Adam(MODEL.parameters())
+OPTIMIZER=torch.optim.AdamW(MODEL.parameters())
+#OPTIMIZER=torch.optim.Adam(MODEL.parameters())
 #OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
 
 # custom learning rate scheduler

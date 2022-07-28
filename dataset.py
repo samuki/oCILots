@@ -6,7 +6,7 @@ import utils
 import config
 import glob
 import albumentations as album
-
+import torchvision
 
 class FlexibleDataset(torch.utils.data.Dataset):
     # dataset to load images of varying sizes
@@ -31,11 +31,11 @@ class FlexibleDataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         image = utils.load_from_path(self.x[item])[:, :, :3]
         mask = utils.load_from_path(self.y[item], grey=True)
-        if self.use_patches:  # split each image into patches
-            image, mask = utils.image_to_patches(image, mask)
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
             image, mask = sample["image"], sample["mask"]
+        if self.use_patches:  # split each image into patches
+            image, mask = utils.flexible_to_patches(image, mask)
         return utils.np_to_tensor(
             np.moveaxis(image, -1, 0).astype("float32"), self.device
         ), utils.np_to_tensor(mask.astype("float32"), self.device)
@@ -91,12 +91,18 @@ def load_test_data():
     test_filenames = glob.glob(test_path + "/*.png")
     test_images = utils.load_all_from_path(test_path)
     size = test_images.shape[1:3]
-    # we also need to resize the test images. This might not be the best ideas depending on their spatial resolution.
     test_images = np.stack(
-        [cv2.resize(img, dsize=(384, 384)) for img in test_images], 0
+        [cv2.resize(img, dsize=(config.HEIGHT, config.WIDTH)) for img in test_images], 0
     )
     test_images = test_images[:, :, :, :3]
     test_images = utils.np_to_tensor(np.moveaxis(test_images, -1, 1), config.DEVICE)
+    transform = torchvision.transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
+    test_images = transform(test_images)
+    # we also need to resize the test images. This might not be the best ideas depending on their spatial resolution.
+    
     return test_images, size, test_filenames
 
 

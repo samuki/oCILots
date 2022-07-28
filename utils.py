@@ -122,6 +122,34 @@ def patch_f1_fn(y_hat, y):
     return f1_score(patches.flatten().cpu(), patches_hat.flatten().cpu(), average='weighted')
 
 
+def flexible_to_patches(images, masks=None):
+    # takes in a 4D np.array containing images and (optionally) a 4D np.array containing the segmentation masks
+    # returns a 4D np.array with an ordered sequence of patches extracted from the image and (optionally) a np.array containing labels
+    h, w = images.shape[0:2]  # shape of images
+    assert (h % config.PATCH_SIZE) + (
+        w % config.PATCH_SIZE
+    ) == 0  # make sure images can be patched exactly
+
+    images = images[:, :, :3]
+
+    h_patches = h // config.PATCH_SIZE
+    w_patches = w // config.PATCH_SIZE
+    patches = images.reshape(
+        (h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE, -1)
+    )
+    patches = np.moveaxis(patches, 2, 3)
+    patches = patches.reshape(-1, config.PATCH_SIZE, config.PATCH_SIZE, 3)
+    if masks is None:
+        return patches
+
+    masks = masks.reshape(
+        (h_patches, config.PATCH_SIZE, w_patches, config.PATCH_SIZE, -1)
+    )
+    masks = np.moveaxis(masks, 2, 3)
+    labels = np.mean(masks, (-1, -2, -3)) > config.CUTOFF  # compute labels
+    labels = labels.reshape(-1).astype(np.float32)
+    return patches, labels
+
 def image_to_patches(images, masks=None):
     # takes in a 4D np.array containing images and (optionally) a 4D np.array containing the segmentation masks
     # returns a 4D np.array with an ordered sequence of patches extracted from the image and (optionally) a np.array containing labels
