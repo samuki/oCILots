@@ -5,11 +5,10 @@ from matplotlib import pyplot as plt
 import numpy as np
 import torch
 import os
-import config
 import shutil
 import logging
 from sklearn.metrics import f1_score
-
+from config import config
 
 def make_log_dir(dt):
     os.makedirs(dt)

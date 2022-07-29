@@ -3,11 +3,11 @@ import cv2
 import numpy as np
 import torch
 import utils
-import config
 import glob
 import albumentations as album
 import torchvision
 from PIL import Image
+from config import config
 
 
 class FlexibleDataset(torch.utils.data.Dataset):

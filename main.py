@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 import torch
 
-import config
 from train import train
 import utils
 
@@ -19,9 +18,11 @@ import datetime
 import test
 import numpy as np
 import random
+from config import config
 
 
 def main():
+
 
     # log training
     log_path_string = datetime.datetime.now().strftime("results/%d%m%Y_%H:%M:%S")
@@ -94,11 +95,11 @@ def main():
         metric_fns,
         optimizer,
         n_epochs,
-        save_dir=dt_string,
+        save_dir=log_path_string,
     )
 
     # load best model
-    model.load_state_dict(torch.load(dt_string + "/model.pth"))
+    model.load_state_dict(torch.load(log_path_string + "/model.pth"))
     model.eval()
 
     # load test dataset
@@ -109,7 +110,7 @@ def main():
 
     # create submision file
     utils.create_submission(
-        test_pred, test_filenames, submission_filename=dt_string + "/submission.csv"
+        test_pred, test_filenames, submission_filename=log_path_string + "/submission.csv"
     )
 
 

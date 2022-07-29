@@ -1,6 +1,6 @@
 import cv2
 import numpy as np 
-import config 
+from config import config
 
 
 def test_prediction(model, test_images, size, cutoff = config.CUTOFF):

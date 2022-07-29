@@ -5,7 +5,9 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils import show_val_samples
 import utils
-import config
+from config import config
+
+
 def train(
     train_dataloader, eval_dataloader, model, loss_fn, metric_fns, optimizer, n_epochs, save_dir
 ):
