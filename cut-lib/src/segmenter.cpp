@@ -108,8 +108,9 @@ void RBFLogDirectionSegmenter<InPixel, Capacity, OutPixel>::add_direction_edges(
             const InPixel pixel_val = this->m_image(i, j);
             if (pixel_val < m_white_cutoff) continue;
             // for each direction, count the number of white pixels in that direction
-            double white_pixel_sum = 0.;
+            double max_white_pixel_sum = 0.;
             for (double theta = 0; theta < M_PI; theta += m_delta_theta) {
+                double white_pixel_sum = 0.;
                 for (double d = -m_radius; d <= m_radius; ++d) {
                     const int x = i + std::round(d * std::sin(theta));
                     const int y = j + std::round(d * std::cos(theta));
@@ -117,10 +118,11 @@ void RBFLogDirectionSegmenter<InPixel, Capacity, OutPixel>::add_direction_edges(
                             && y >= 0 && static_cast<unsigned>(y) < this->m_H)
                         white_pixel_sum += this->m_image(x, y);
                 }
+                max_white_pixel_sum = std::max(max_white_pixel_sum, white_pixel_sum);
             }
             // add an edge with the white sum weighted with the pixel's probability to the source
             adder.add_edge(this->m_src, this->m_index(i, j),
-                    m_lambda_dir * pixel_val * white_pixel_sum);
+                    m_lambda_dir * pixel_val * max_white_pixel_sum);
         }
     }
 }
