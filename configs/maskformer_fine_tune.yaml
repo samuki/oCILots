@@ -34,15 +34,15 @@ p_augment: 0.5
 RANDOM_SEED: 42
 
 # model
-MODEL: UNet().to(config.DEVICE)
+#MODEL: UNet().to(config.DEVICE)
 #MODEL = SwinTransformerPretrained().to(DEVICE)
-#MODEL = MaskformerPretrained().to(DEVICE)
+MODEL: MaskformerPretrained().to(config.DEVICE)
 #model = LRSRModel().to(DEVICE)
 #MODEL = SegFormerPretrained().to(DEVICE)
 
 # load ckpt to fine-tune
-LOAD_CKTP: False
-CKPT_PATH: "results/25072022_13:41:25"
+LOAD_CKTP: True
+CKPT_PATH: "results/29072022_01:04:52"
 
 EPOCHS: 100
 
@@ -50,7 +50,8 @@ LOSS: torch.nn.BCELoss()
 
 
 # optimizer 
-OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
+OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters())
+#OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
 #OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
 
 # custom learning rate scheduler

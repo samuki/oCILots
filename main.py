@@ -22,8 +22,6 @@ from config import config
 
 
 def main():
-
-
     # log training
     log_path_string = datetime.datetime.now().strftime("results/%d%m%Y_%H:%M:%S")
     utils.make_log_dir(log_path_string)
@@ -79,7 +77,7 @@ def main():
 
     model = config.MODEL
     loss_fn = config.LOSS
-    metric_fns = config.METRICS
+    metric_fns = {"acc": utils.accuracy_fn, "patch_acc": utils.patch_accuracy_fn, "f1_patch_acc": utils.patch_f1_fn}
     optimizer = config.OPTIMIZER
     n_epochs = config.EPOCHS
 
