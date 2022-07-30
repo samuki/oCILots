@@ -139,7 +139,7 @@ def find_file_saving_index(city_name):
 
 
 if __name__ == '__main__':
-    google_api_key = "AIzaSyB2iHF1QppSldtFnptoGWd5rKO3x3Ehm90"
+    google_api_key = "PLACE YOUR GOOGLE API KEY HERE"
     is_valid, filtered_data = input_check()
     if not is_valid:
         sys.exit(1)
