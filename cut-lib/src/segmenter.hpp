@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ndarray.hpp"
+#include <concepts>
 #include <cmath>
 #include <vector>
 #include <stack>
@@ -9,9 +10,9 @@
 #include <boost/graph/push_relabel_max_flow.hpp>
 
 
-template<typename InPixel, typename Capacity, typename OutPixel>
+template<typename InPixel, typename Capacity, std::integral OutPixel>
 class Segmenter {
-private:
+protected:
     using traits = boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>;
     using graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
           boost::no_property,
@@ -19,7 +20,6 @@ private:
           boost::property<boost::edge_residual_capacity_t, Capacity,
           boost::property<boost::edge_reverse_t, traits::edge_descriptor>>>>;
 
-protected:
     const unsigned m_resolution;
     NDArray<InPixel> m_image;
     unsigned m_W, m_H;
@@ -69,7 +69,7 @@ protected:
 };
 
 
-template<typename InPixel, typename Capacity, typename OutPixel>
+template<typename InPixel, typename Capacity, std::integral OutPixel>
 class RBFLogSegmenter : public Segmenter<InPixel, Capacity, OutPixel> {
 private:
     const InPixel m_lambda;
@@ -79,7 +79,7 @@ public:
     RBFLogSegmenter(InPixel sigma, InPixel lambda, unsigned resolution)
         : Segmenter<InPixel, Capacity, OutPixel>(resolution), m_lambda(lambda), m_sigma(sigma) {}
 
-    std::string name() const {
+    virtual std::string name() const {
         std::stringstream s;
         s << "RBFLogSegmenter(s" << m_sigma << "_l" << m_lambda
             << "_r" << this->m_resolution << ')';
@@ -87,20 +87,20 @@ public:
     }
 
 protected:
-    Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const {
+    virtual Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const {
         const InPixel diff = this->m_image(i1, j1) - this->m_image(i2, j2);
         const InPixel cap = exp(-0.5 * diff * diff / m_sigma);
         return this->discretize(cap);
     }
 
-    Capacity edge_weight_s(unsigned i, unsigned j) const {
+    virtual Capacity edge_weight_s(unsigned i, unsigned j) const {
         InPixel val = this->m_image(i, j);
         val = std::min(val, static_cast<InPixel>(0.999));
         const InPixel cap = - m_lambda * log(val);
         return this->discretize(cap);
     }
 
-    Capacity edge_weight_t(unsigned i, unsigned j) const {
+    virtual Capacity edge_weight_t(unsigned i, unsigned j) const {
         InPixel val = this->m_image(i, j);
         val = std::max(val, static_cast<InPixel>(0.001));
         const InPixel cap = - m_lambda * log(1 - val);
@@ -109,33 +109,54 @@ protected:
 };
 
 
-template<typename InPixel, typename Capacity, typename OutPixel>
-class RBFLogDirectionSegmenter : public RBFLogSegmenter<InPixel, Capacity, OutPixel> {
+template<std::integral InPixel, typename Capacity, std::integral OutPixel>
+class DirectionSegmenter : public Segmenter<InPixel, Capacity, OutPixel> {
 private:
-    InPixel m_lambda_dir;
-    InPixel m_white_cutoff;
+    double m_lambda_pred;
+    double m_lambda_dir;
     int m_radius;
     double m_delta_theta;
 
 public:
-    RBFLogDirectionSegmenter(
-            InPixel sigma,
-            InPixel lambda,
+    DirectionSegmenter(
+            InPixel lambda_pred,
             InPixel lambda_dir,
-            InPixel white_cutoff,
-            int radius,
+            unsigned radius,
             double delta_theta,
             unsigned resolution)
-        : RBFLogSegmenter<InPixel, Capacity, OutPixel>(sigma, lambda, resolution),
+        : Segmenter<InPixel, Capacity, OutPixel>(resolution),
+          m_lambda_pred(lambda_pred),
           m_lambda_dir(lambda_dir),
-          m_white_cutoff(white_cutoff),
           m_radius(radius),
           m_delta_theta(delta_theta) {}
 
-    void add_direction_edges(typename Segmenter<InPixel, Capacity, OutPixel>::edge_adder& adder);
+    virtual std::string name() const {
+        std::stringstream s;
+        s << "DirectionSegmenter(pred=" << m_lambda_pred
+            << ", dir=" << m_lambda_dir << ", r=" << m_radius << ", dt=" << m_delta_theta << ')';
+        return s.str();
+    }
+
+    virtual Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const {
+        // to silence unused warning, which is intentional here
+        (void) i1; (void) j1; (void) i2; (void) j2;
+        return 0;
+    }
+
+    virtual Capacity edge_weight_s(unsigned i, unsigned j) const {
+        return m_lambda_pred * this->m_image(i, j);
+    }
+
+    virtual Capacity edge_weight_t(unsigned i, unsigned j) const {
+        return m_lambda_pred * (1 - this->m_image(i, j));
+    }
+
+    virtual void add_direction_edges();
     virtual void build_graph();
 };
 
 
-template class RBFLogDirectionSegmenter<float, unsigned long long, unsigned>;
-template class RBFLogDirectionSegmenter<double, unsigned long long, unsigned>;
+template class RBFLogSegmenter<float, unsigned long long, unsigned>;
+template class RBFLogSegmenter<double, unsigned long long, unsigned>;
+
+template class DirectionSegmenter<unsigned, unsigned long long, unsigned>;

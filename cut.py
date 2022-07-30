@@ -4,7 +4,6 @@ import ctypes
 import sys
 import time
 import math
-import itertools
 import glob
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
@@ -75,60 +74,40 @@ class RBFLogSegmenter(Segmenter):
         return segmentations
 
 
-class RBFLogDirSegmenter(RBFLogSegmenter):
-    lambd_dir: float
-    white_cutoff: float
-    radius: int
+class DirectionSegmenter(Segmenter):
+    lambda_pred: int
+    lambda_dir: int
+    radsiu: int
     delta_theta: float
 
     def __init__(
         self,
-        sigma: float,
-        lambd: float,
-        lambd_dir: float,
-        white_cutoff: float,
+        lambda_pred: int,
+        lambda_dir: int,
         radius: int,
         delta_theta: float,
         resolution: int,
     ) -> None:
-        super().__init__(sigma, lambd, resolution)
-        self.lambd_dir = lambd_dir
-        self.white_cutoff = white_cutoff
+        super().__init__(resolution)
+        self.lambda_pred = lambda_pred
+        self.lambda_dir = lambda_dir
         self.radius = radius
         self.delta_theta = delta_theta
 
     def __str__(self) -> str:
         return (
-            f"RBFLogDir(sig={self.sigma}, lam={self.lambd}, lam_dir={self.lambd_dir}, "
-            f"wc={self.white_cutoff}, r={self.radius}, dt={self.delta_theta})"
+            f"Direction(pred={self.lambda_pred}, dir={self.lambda_dir}, r={self.radius}, "
+            f"dt={self.delta_theta:.4f})"
         )
 
     def segment(self, images: np.ndarray) -> np.ndarray:  # type: ignore
         segmentations = np.empty_like(images, dtype=np.int32)
-        sigma_ct: ctypes.c_float | ctypes.c_double
-        lambd_ct: ctypes.c_float | ctypes.c_double
-        lambd_dir_ct: ctypes.c_float | ctypes.c_double
-        white_cutoff_ct: ctypes.c_float | ctypes.c_double
-        if images.dtype == np.float32:
-            fn = LIB.rbf_log_dir_segment_float
-            sigma_ct = ctypes.c_float(self.sigma)
-            lambd_ct = ctypes.c_float(self.lambd)
-            lambd_dir_ct = ctypes.c_float(self.lambd_dir)
-            white_cutoff_ct = ctypes.c_float(self.white_cutoff)
-        elif images.dtype == np.float64:
-            fn = LIB.rbf_log_dir_segment_double
-            sigma_ct = ctypes.c_double(self.sigma)
-            lambd_ct = ctypes.c_double(self.lambd)
-            lambd_dir_ct = ctypes.c_double(self.lambd_dir)
-            white_cutoff_ct = ctypes.c_double(self.white_cutoff)
-        else:
+        if images.dtype != np.int32:
             raise ValueError(f"images have unknown datatype {images.dtype!r}")
-        fn(
-            sigma_ct,
-            lambd_ct,
-            lambd_dir_ct,
-            white_cutoff_ct,
-            ctypes.c_int(self.radius),
+        LIB.dir_segment_unsigned(
+            ctypes.c_uint(self.lambda_pred),
+            ctypes.c_uint(self.lambda_dir),
+            ctypes.c_uint(self.radius),
             ctypes.c_double(self.delta_theta),
             ctypes.c_uint(self.resolution),
             ctypes.c_uint(images.ndim),
@@ -141,56 +120,51 @@ class RBFLogDirSegmenter(RBFLogSegmenter):
         return segmentations
 
 
-def plot(pred: np.ndarray, gt: np.ndarray, seg: np.ndarray):
-    cmap_args = {"cmap": "gray", "vmin": 0.0, "vmax": 1.0}
-    fig, axs = plt.subplots(1, 3, figsize=(16, 10), constrained_layout=True)
-    pred_ax, gt_ax, seg_ax = axs.flat
-    pred_ax.title.set_text("prediction")
-    gt_ax.title.set_text("ground-truth")
-    seg_ax.title.set_text("segmentation")
-    pred_ax.imshow(pred, **cmap_args)
-    gt_ax.imshow(gt, **cmap_args)
-    seg_ax.imshow(seg, **cmap_args)
+def plot(**kwargs: np.ndarray):
+    n_rows = math.ceil(math.sqrt(len(kwargs)))
+    fig, axs = plt.subplots(n_rows, n_rows, figsize=(16, 10), constrained_layout=True)
+    for (name, im), ax in zip(kwargs.items(), axs.flat):
+        ax.title.set_text(name)
+        ax.imshow(im, cmap="gray", vmin=0, vmax=np.max(im))
     fig.show()
     plt.show()
 
 
 def visualize(
-    predictions: np.ndarray,
-    segmentations: dict[str, np.ndarray],
     *,
     show: bool = True,
     save: Optional[str] = None,
+    **kwargs: np.ndarray | tuple[np.ndarray, dict[str, Any]],
 ) -> None:
     # load prediction & segmentation images
-    n_segmentations = len(segmentations)
-    n_subplots = n_segmentations + 2
-    n_rows = int(math.ceil(math.sqrt(n_subplots)))
+    n_rows = int(math.ceil(math.sqrt(len(kwargs))))
 
-    n_images = predictions.shape[0]
+    fst = next(iter(kwargs.values()))
+    if isinstance(fst, tuple):
+        fst, _ = fst
+    n_images = fst.shape[0]
     curr_image = 0
 
-    cmap_args = {"cmap": "gray", "vmin": 0.0, "vmax": 1.0}
+    default_cmap_args = {"cmap": "gray", "vmin": 0.0, "vmax": 1.0}
 
     # plot prediction heatmap and segmentation side-by-side
     fig, axs = plt.subplots(n_rows, n_rows, figsize=(16, 10), constrained_layout=True)
-    pred_ax, round_ax = axs.flat[0], axs.flat[1]
-    pred_ax.title.set_text("prediction")
-    round_ax.title.set_text("rounded")
-    pred_image = pred_ax.imshow(predictions[curr_image, :, :], **cmap_args)
-    round_image = round_ax.imshow(np.round(predictions[curr_image, :, :]), **cmap_args)
-    cut_images = []
-    for i, (ax, (segmenter, segs)) in enumerate(
-        zip(itertools.islice(axs.flat, 2, None), segmentations.items())
-    ):
-        ax.title.set_text(segmenter)
-        cut_images.append(ax.imshow(segs[curr_image, :, :], **cmap_args))
+    images = {}
+    for (name, image), ax in zip(kwargs.items(), axs.flat):
+        if isinstance(image, tuple):
+            image, cmap_args = image
+        else:
+            cmap_args = default_cmap_args
+        ax.title.set_text(name)
+        images[name] = ax.imshow(image[curr_image, :, :], **cmap_args)
+        plt.colorbar(images[name], ax=ax)
 
     def show_image() -> None:
-        pred_image.set_data(predictions[curr_image, :, :])
-        round_image.set_data(np.round(predictions[curr_image, :, :]))
-        for im, segs in zip(cut_images, segmentations.values()):
-            im.set_data(segs[curr_image, :, :])
+        for name, im in images.items():
+            image = kwargs[name]
+            if isinstance(image, tuple):
+                image, _ = image
+            im.set_data(image[curr_image, :, :])
         fig.canvas.draw()
 
     def left_callback() -> None:
@@ -257,6 +231,7 @@ def validate_segmenters(
     metric_fns: dict[str, Callable[[Any, Any], np.double]],
     *,
     rank_metric: Optional[str] = None,
+    print_sorted: bool = False,
 ) -> Segmenter:
     total_start = time.perf_counter()
     groundtruths_tensor = torch.tensor(groundtruths.astype("float32"))
@@ -267,7 +242,7 @@ def validate_segmenters(
     for i, segmenter in enumerate(segmenters):
         print(
             f"{i+1:{len(str(n_segmenters))}d}/{n_segmenters}: {segmenter!s} ... ",
-            end="",
+            end="\n",
         )
         sys.stdout.flush()
         start = time.perf_counter()
@@ -275,59 +250,46 @@ def validate_segmenters(
         segmentations_tensor = torch.tensor(segmentations)
         end = time.perf_counter()
         print(f"done in {end-start:.4f} seconds")
-        print(
-            f"differ in {np.count_nonzero(segmentations[0]-groundtruths[0])} elements "
-            f"with max-diff {np.max(np.abs(segmentations[0]-groundtruths[0]))}"
-        )
         for name, fn in metric_fns.items():
             metric = fn(groundtruths_tensor, segmentations_tensor)
             metrics[name][i] = metric
             print(f"\t{name:{metric_width}s}  {metric}")
     # extract and print the best-performing one if a rank-metric is given
     if rank_metric is not None:
-        best_idx = int(np.argmax(metrics[rank_metric]))
-        best = segmenters[best_idx]
-        print(f"Best: {best!s} with {metrics[rank_metric][best_idx]}")
+        if not print_sorted:
+            best_idx = int(np.argmax(metrics[rank_metric]))
+            best = segmenters[best_idx]
+            print(f"Best: {best!s} with {metrics[rank_metric][best_idx]}")
+        else:
+            segmenters_metrics = sorted(
+                zip(segmenters, metrics[rank_metric]), key=lambda t: t[1]
+            )
+            for i, (seg, metric) in enumerate(segmenters_metrics):
+                print(
+                    f"{n_segmenters-i:{len(str(n_segmenters))}d}/{n_segmenters}: "
+                    f"{seg!s} with {metric}"
+                )
+            best, _ = segmenters_metrics[-1]
     end = time.perf_counter()
     print(f"Total time: {end-total_start:.4f} seconds")
     return best
 
 
 def main() -> None:
-    predictions, groundtruths = load_prediction_groundtruth(
-        "results/28072022_15:48:50/training_predictions"
-    )
+    base_dir = "results/predictions"
+    predictions = np.load(f"{base_dir}/predictions.npy")
+    groundtruths = np.load(f"{base_dir}/groundtruths.npy")
     segmenters = [
-        RBFLogSegmenter(sigma=sigma, lambd=lambd, resolution=res)
-        #  for sigma in (0.1, 1.0, 10.0)
-        for sigma in (0.1,)
-        for lambd in np.arange(start=0.1, stop=1.0, step=0.02)
-        for lambd in (0.36,)
-        for res in (100,)
-    ] + [
-        RBFLogDirSegmenter(
-            sigma=sigma,
-            lambd=lambd,
-            lambd_dir=lambd_dir,
-            white_cutoff=cutoff,
-            radius=r,
-            delta_theta=dt,
-            resolution=res,
-        )
-        for sigma in (0.1, 1.0, 10.0)
-        for lambd in (0.1, 0.3, 0.5)
-        for lambd_dir in (0.1, 1, 10)
-        for cutoff in (0.25, 0.5, 0.75)
-        for r in (5, 10, 20)
-        for dt in (math.pi / 4, math.pi / 8)
-        for res in (100,)
+        RBFLogSegmenter(sigma=0.1, lambd=lambd, resolution=100)
+        for lambd in np.arange(start=0.1, stop=0.7, step=0.01)
     ]
     validate_segmenters(
         segmenters,
         predictions,
         groundtruths,
-        config.METRICS,
-        rank_metric="patch_f1_fn",
+        {**config.METRICS, "f1": utils.f1_fn},
+        rank_metric="f1",
+        print_sorted=True,
     )
 
 

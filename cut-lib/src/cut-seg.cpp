@@ -2,9 +2,6 @@
 #include "ndarray.hpp"
 #include <fstream>
 
-// const auto sigmas = {10., 50., 100., 500., 1000., 2000., 5000.};
-// const auto lambdas = {1., 1.5, 2., 2.5, 3.};
-// const auto resolutions = {1000u};
 
 template<typename InPixel, typename Capacity, typename OutPixel>
 int batch_segment(
@@ -64,12 +61,10 @@ extern "C" int rbf_log_segment_double(
     return batch_segment<double, unsigned long long, unsigned>(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
 }
 
-extern "C" int rbf_log_dir_segment_float(
-        float sigma,
-        float lambda,
-        float lambda_dir,
-        float white_cutoff,
-        int radius,
+extern "C" int dir_segment_unsigned(
+        unsigned lambda_pred,
+        unsigned lambda_dir,
+        unsigned radius,
         double delta_theta,
         unsigned resolution,
         unsigned dims,
@@ -78,26 +73,8 @@ extern "C" int rbf_log_dir_segment_float(
         const unsigned* in_strides,
         std::byte* out_data,
         const unsigned* out_strides) {
-    RBFLogDirectionSegmenter<float, unsigned long long, unsigned> segmenter{
-        sigma, lambda, lambda_dir, white_cutoff, radius, delta_theta, resolution};
-    return batch_segment<float, unsigned long long, unsigned>(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
-}
-
-extern "C" int rbf_log_dir_segment_double(
-        double sigma,
-        double lambda,
-        double lambda_dir,
-        double white_cutoff,
-        int radius,
-        double delta_theta,
-        unsigned resolution,
-        unsigned dims,
-        const unsigned* shape,
-        std::byte* in_data,
-        const unsigned* in_strides,
-        std::byte* out_data,
-        const unsigned* out_strides) {
-    RBFLogDirectionSegmenter<double, unsigned long long, unsigned> segmenter{
-        sigma, lambda, lambda_dir, white_cutoff, radius, delta_theta, resolution};
-    return batch_segment<double, unsigned long long, unsigned>(&segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
+    DirectionSegmenter<unsigned, unsigned long long, unsigned> segmenter{
+        lambda_pred, lambda_dir, radius, delta_theta, resolution};
+    return batch_segment<unsigned, unsigned long long, unsigned>(
+            &segmenter, dims, shape, in_data, in_strides, out_data, out_strides);
 }

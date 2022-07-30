@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -O3 -Wall -Wextra -Wpedantic
+CFLAGS = -std=c++20 -O3 -Wall -Wextra -Wpedantic
 
 .DEFAULT_GOAL := include/cut-seg.so
 

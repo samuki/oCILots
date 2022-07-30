@@ -2,7 +2,7 @@
 #include <fstream>
 
 
-template<typename InPixel, typename Capacity, typename OutPixel>
+template<typename InPixel, typename Capacity, std::integral OutPixel>
 void Segmenter<InPixel, Capacity, OutPixel>::add_st_edges() {
     edge_adder adder{m_G};
     for (unsigned i = 0; i < m_W; ++i) {
@@ -14,7 +14,7 @@ void Segmenter<InPixel, Capacity, OutPixel>::add_st_edges() {
     }
 }
 
-template<typename InPixel, typename Capacity, typename OutPixel>
+template<typename InPixel, typename Capacity, std::integral OutPixel>
 void Segmenter<InPixel, Capacity, OutPixel>::add_neighbor_edges() {
     edge_adder adder{m_G};
     // interior edges
@@ -39,7 +39,7 @@ void Segmenter<InPixel, Capacity, OutPixel>::add_neighbor_edges() {
     }
 }
 
-template<typename InPixel, typename Capacity, typename OutPixel>
+template<typename InPixel, typename Capacity, std::integral OutPixel>
 void Segmenter<InPixel, Capacity, OutPixel>::build_graph() {
     const unsigned N = m_W * m_H;
     m_G = graph{N+2};
@@ -56,7 +56,7 @@ void Segmenter<InPixel, Capacity, OutPixel>::build_graph() {
 }
 
 
-template<typename InPixel, typename Capacity, typename OutPixel>
+template<typename InPixel, typename Capacity, std::integral OutPixel>
 void Segmenter<InPixel, Capacity, OutPixel>::segment(
         const NDArray<InPixel>& in_image,
         NDArray<OutPixel>& out_image) {
@@ -99,37 +99,43 @@ void Segmenter<InPixel, Capacity, OutPixel>::segment(
 //                                         Directional Edges
 // --------------------------------------------------------------------------------------------
 
-template<typename InPixel, typename Capacity, typename OutPixel>
-void RBFLogDirectionSegmenter<InPixel, Capacity, OutPixel>::add_direction_edges(
-        typename Segmenter<InPixel, Capacity, OutPixel>::edge_adder& adder) {
+template<std::integral InPixel, typename Capacity, std::integral OutPixel>
+void DirectionSegmenter<InPixel, Capacity, OutPixel>::add_direction_edges() {
+    typename Segmenter<InPixel, Capacity, OutPixel>::edge_adder adder{this->m_G};
     for (unsigned i = 0; i < this->m_W; ++i) {
         for (unsigned j = 0; j < this->m_H; ++j) {
-            // skip pixels that are too unlikely to be white
-            const InPixel pixel_val = this->m_image(i, j);
-            if (pixel_val < m_white_cutoff) continue;
             // for each direction, count the number of white pixels in that direction
-            double max_white_pixel_sum = 0.;
+            InPixel max_n_white_pixels = 0;
             for (double theta = 0; theta < M_PI; theta += m_delta_theta) {
-                double white_pixel_sum = 0.;
+                InPixel n_white_pixels = 0;
                 for (double d = -m_radius; d <= m_radius; ++d) {
                     const int x = i + std::round(d * std::sin(theta));
                     const int y = j + std::round(d * std::cos(theta));
                     if (x >= 0 && static_cast<unsigned>(x) < this->m_W
                             && y >= 0 && static_cast<unsigned>(y) < this->m_H)
-                        white_pixel_sum += this->m_image(x, y);
+                        n_white_pixels += this->m_image(x, y);
                 }
-                max_white_pixel_sum = std::max(max_white_pixel_sum, white_pixel_sum);
+                max_n_white_pixels = std::max(max_n_white_pixels, n_white_pixels);
             }
             // add an edge with the white sum weighted with the pixel's probability to the source
-            adder.add_edge(this->m_src, this->m_index(i, j),
-                    m_lambda_dir * pixel_val * max_white_pixel_sum);
+            const Capacity strength = this->discretize(m_lambda_dir * max_n_white_pixels);
+            adder.add_edge(this->m_src, this->m_index(i, j), strength);
         }
     }
 }
 
-template<typename InPixel, typename Capacity, typename OutPixel>
-void RBFLogDirectionSegmenter<InPixel, Capacity, OutPixel>::build_graph() {
-    RBFLogSegmenter<InPixel, Capacity, OutPixel>::build_graph();
+template<std::integral InPixel, typename Capacity, std::integral OutPixel>
+void DirectionSegmenter<InPixel, Capacity, OutPixel>::build_graph() {
+    const unsigned N = this->m_W * this->m_H;
+    this->m_G = typename Segmenter<InPixel, Capacity, OutPixel>::graph{N+2};
     typename Segmenter<InPixel, Capacity, OutPixel>::edge_adder adder{this->m_G};
-    add_direction_edges(adder);
+
+    this->m_src = N;
+    this->m_snk = N + 1;
+    this->m_index = [this](unsigned i, unsigned j) -> int {
+        return i*this->m_W + j;
+    };
+
+    this->add_st_edges();
+    add_direction_edges();
 }
