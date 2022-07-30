@@ -20,7 +20,7 @@ GRAD_ACCUM: 1
 
 
 # Define whether input data should be augmented or not
-USE_AUGMENTATION: False
+USE_AUGMENTATION: True
 
 # define whether the data should be normalized or not
 USE_NORMALIZATION: True
