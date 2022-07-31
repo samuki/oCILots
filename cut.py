@@ -8,6 +8,8 @@ import glob
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 import torch
+from config import config
+import utils
 
 
 LIB = ctypes.CDLL("./cut-lib/include/cut-seg.so")
@@ -244,3 +246,29 @@ def validate_segmenters(
     end = time.perf_counter()
     print(f"Total time: {end-total_start:.4f} seconds")
     return best
+
+
+def main() -> None:
+    predictions = np.load(f"{config.PREDICTIONS_BASE_DIR}/predictions.npy")
+    groundtruths = np.load(f"{config.PREDICTIONS_BASE_DIR}/groundtruths.npy")
+    segmenters = [
+        RBFLogSegmenter(sigma=sigma, lambd=lambd, resolution=100)
+        for sigma in (0.1, 1.0, 10.0)
+        for lambd in np.arange(start=0.05, stop=0.7, step=0.05)
+    ]
+    metrics = {
+        "patch_acc": utils.patch_accuracy_fn,
+        "patch_f1": utils.patch_f1_fn,
+    }
+    validate_segmenters(
+        segmenters,
+        predictions,
+        groundtruths,
+        metrics,
+        rank_metric="patch_f1",
+        print_sorted=True,
+    )
+
+
+if __name__ == "__main__":
+    main()
