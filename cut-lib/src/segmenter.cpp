@@ -17,25 +17,37 @@ void Segmenter<InPixel, Capacity, OutPixel>::add_st_edges() {
 template<typename InPixel, typename Capacity, std::integral OutPixel>
 void Segmenter<InPixel, Capacity, OutPixel>::add_neighbor_edges() {
     edge_adder adder{m_G};
-    // interior edges
-    for (unsigned i = 0; i < m_W-1; ++i) {
+    // edges to bottom
+    for (unsigned i = 0; i < m_W; ++i) {
         for (unsigned j = 0; j < m_H-1; ++j) {
             const unsigned curr = m_index(i, j);
-            const unsigned right = m_index(i+1, j);
             const unsigned bottom = m_index(i, j+1);
-            adder.add_edge(curr, right, edge_weight(i, j, i+1, j));
             adder.add_edge(curr, bottom, edge_weight(i, j, i, j+1));
         }
     }
-    // bottom border edges
+    // edges to to right
     for (unsigned i = 0; i < m_W-1; ++i) {
-        const unsigned curr = m_index(i, m_H-1), right = m_index(i+1, m_H-1);
-        adder.add_edge(curr, right, edge_weight(i, m_H-1, i+1, m_H-1));
+        for (unsigned j = 0; j < m_H; ++j) {
+            const unsigned curr = m_index(i, j);
+            const unsigned right = m_index(i+1, j);
+            adder.add_edge(curr, right, edge_weight(i, j, i+1, j));
+        }
     }
-    // right border edges
-    for (unsigned j = 0; j < m_H-1; ++j) {
-        const unsigned curr = m_index(m_W-1, j), bottom = m_index(m_W-1, j+1);
-        adder.add_edge(curr, bottom, edge_weight(m_W-1, j, m_W-1, j+1));
+    // edges to diagonal bottom right
+    for (unsigned i = 0; i < m_W-1; ++i) {
+        for (unsigned j = 0; j < m_H-1; ++j) {
+            const unsigned curr = m_index(i, j);
+            const unsigned diag = m_index(i+1, j+1);
+            adder.add_edge(curr, diag, edge_weight(i, j, i+1, j+1));
+        }
+    }
+    // edges to diagonal bottom left
+    for (unsigned i = 1; i < m_W; ++i) {
+        for (unsigned j = 0; j < m_H-1; ++j) {
+            const unsigned curr = m_index(i, j);
+            const unsigned diag = m_index(i-1, j+1);
+            adder.add_edge(curr, diag, edge_weight(i, j, i-1, j+1));
+        }
     }
 }
 

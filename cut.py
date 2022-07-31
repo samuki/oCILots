@@ -120,16 +120,6 @@ class DirectionSegmenter(Segmenter):
         return segmentations
 
 
-def plot(**kwargs: np.ndarray):
-    n_rows = math.ceil(math.sqrt(len(kwargs)))
-    fig, axs = plt.subplots(n_rows, n_rows, figsize=(16, 10), constrained_layout=True)
-    for (name, im), ax in zip(kwargs.items(), axs.flat):
-        ax.title.set_text(name)
-        ax.imshow(im, cmap="gray", vmin=0, vmax=np.max(im))
-    fig.show()
-    plt.show()
-
-
 def visualize(
     *,
     show: bool = True,

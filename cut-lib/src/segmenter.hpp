@@ -88,9 +88,11 @@ public:
 
 protected:
     virtual Capacity edge_weight(unsigned i1, unsigned j1, unsigned i2, unsigned j2) const {
+        const double dx = i1 - i2, dy = j1 - j2;
+        const double dist = std::sqrt(dx*dx + dy*dy);
         const InPixel diff = this->m_image(i1, j1) - this->m_image(i2, j2);
         const InPixel cap = exp(-0.5 * diff * diff / m_sigma);
-        return this->discretize(cap);
+        return this->discretize(cap / dist);
     }
 
     virtual Capacity edge_weight_s(unsigned i, unsigned j) const {

@@ -1,14 +1,15 @@
 from glob import glob
 import re
-from PIL import Image
-from matplotlib import pyplot as plt
+from PIL import Image  # type: ignore
+from matplotlib import pyplot as plt  # type: ignore
 import numpy as np
 import torch
 import os
 import config
 import shutil
 import logging
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score  # type: ignore
+
 
 def make_log_dir(dt):
     os.makedirs(dt)
@@ -29,7 +30,10 @@ def load_all_from_path(path):
 def load_from_path(path, grey=False):
     # loads all HxW .pngs contained in path as a 4D np.array of shape (n_images, H, W, 3)
     # images are loaded as floats with values in the interval [0., 1.]
-    return np.array(Image.open(path).convert('L' if grey else "RGB")).astype(np.float32) / 255.0
+    return (
+        np.array(Image.open(path).convert("L" if grey else "RGB")).astype(np.float32)
+        / 255.0
+    )
 
 
 def show_first_n(imgs, masks, n=5):
@@ -103,6 +107,7 @@ def patch_accuracy_fn(y_hat, y):
     )
     return (patches == patches_hat).float().mean()
 
+
 def patch_f1_fn(y_hat, y):
     # computes f1 weighted by patches (metric used on Kaggle for evaluation)
     h_patches = y.shape[-2] // config.PATCH_SIZE
@@ -119,7 +124,13 @@ def patch_f1_fn(y_hat, y):
         ).mean((-1, -3))
         > config.CUTOFF
     )
-    return f1_score(patches.flatten().cpu(), patches_hat.flatten().cpu(), average='weighted')
+    return f1_score(
+        patches.flatten().cpu(), patches_hat.flatten().cpu(), average="weighted"
+    )
+
+
+def f1_fn(y_hat, y):
+    return f1_score(y_hat.flatten().cpu(), y.flatten().cpu(), average="weighted")
 
 
 def flexible_to_patches(images, masks=None):
@@ -233,10 +244,10 @@ def visualize(index, save, show, **images):
     if show:
         plt.show()
     if save:
-        plt.savefig('examples/'+str(index)+'.png')
-        
-        
-def make_logger(log_file: str = None, name='logger'):
+        plt.savefig("examples/" + str(index) + ".png")
+
+
+def make_logger(log_file: str = None, name="logger"):
     """
     Create a logger for logging the training/testing process.
 
@@ -245,7 +256,7 @@ def make_logger(log_file: str = None, name='logger'):
     """
     logger = logging.getLogger(name)
     logger.setLevel(level=logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s %(message)s")
     if log_file is not None:
         fh = logging.FileHandler(log_file)
         logger.addHandler(fh)
@@ -260,15 +271,21 @@ def make_logger(log_file: str = None, name='logger'):
 def save_if_best_model(model, save_dir, epoch, current, best_stats, logger):
     is_best = False
     if config.save_best_metric not in best_stats:
-        is_best=True
-    else: 
+        is_best = True
+    else:
         if config.minimize_metric:
-            if current[epoch][config.save_best_metric] < best_stats[config.save_best_metric]:
-                is_best=True
+            if (
+                current[epoch][config.save_best_metric]
+                < best_stats[config.save_best_metric]
+            ):
+                is_best = True
         else:
-            if current[epoch][config.save_best_metric] > best_stats[config.save_best_metric]:
-                is_best=True
-    if is_best: 
+            if (
+                current[epoch][config.save_best_metric]
+                > best_stats[config.save_best_metric]
+            ):
+                is_best = True
+    if is_best:
         logger.info("New best result at epoch " + str(epoch))
         best_stats = current[epoch]
         logger.info("Loging results ---> {0}".format(best_stats))
@@ -277,13 +294,16 @@ def save_if_best_model(model, save_dir, epoch, current, best_stats, logger):
     return best_stats
 
 
-def learning_rate(optimizer, base_lr, max_iters,
-        cur_iters, warmup_iter=None, power=0.9):
+def learning_rate(
+    optimizer, base_lr, max_iters, cur_iters, warmup_iter=None, power=0.9
+):
     if warmup_iter is not None and cur_iters < warmup_iter:
         lr = base_lr * cur_iters / (warmup_iter + 1e-8)
     elif warmup_iter is not None:
-        lr = base_lr*((1-float(cur_iters - warmup_iter) / (max_iters - warmup_iter))**(power))
+        lr = base_lr * (
+            (1 - float(cur_iters - warmup_iter) / (max_iters - warmup_iter)) ** (power)
+        )
     else:
         lr = base_lr * ((1 - float(cur_iters / max_iters)) ** (power))
-    optimizer.param_groups[0]['lr'] = lr
+    optimizer.param_groups[0]["lr"] = lr
     return lr
