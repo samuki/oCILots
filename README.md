@@ -8,16 +8,16 @@
 
 ## Collecting additional training data
 
-The python script collect_data.py in  [additional-data/](additional-data) has been used to collect additional images from Google maps. The code in the script is an adapted version from the following phyton script available on GitHub https://github.com/ardaduz/cil-road-segmentation/tree/master/additional-data. 
+The python script collect\_data.py in  [additional-data/](additional-data) has been used to collect additional images from Google maps. The code in the script is an adapted version from the following phyton script available on GitHub https://github.com/ardaduz/cil-road-segmentation/tree/master/additional-data. 
 
-To run the script you need to add a Google maps api key in the  placeholder section "PLACE YOUR GOOGLE API KEY HERE" in collect_data.py. 
+To run the script you need to add a Google maps api key in the  placeholder section "PLACE YOUR GOOGLE API KEY HERE" in collect\_data.py. 
 To run the code you need to run the following commands. 
 
 ***REMOVED***
 cd additional-data
 python3 collect_data.py
 ***REMOVED***
-The script is fetching data from cities defined in input_cities.csv. The file can also be found in the additional-data/ folder. 
+The script is fetching data from cities defined in input\_cities.csv. The file can also be found in the additional-data/ folder. 
 
 
 ***REMOVED*** 
@@ -30,6 +30,29 @@ To run the scripts defined in the next section and reproduce our results you nee
 ***REMOVED***
 ***REMOVED***
 ***REMOVED***
+
+## Segmentation Library
+Due to performance issues with most python graph libraries, the underlying code to perform the minimum-cut-based segmentation was implemented in C++ using the Boost Graph Library.
+The corresponding code and Makefile is located in the cut-lib directory.
+In order to build a shared object that can be called from the python wrapper, run `make` in this directory.
+Note that building the code requires a C++-compiler with support for C++-20 and Boost for the Boost Graph Library (we used g++ 11.3.0 and Boost 1.79.0-1).
+The segmentations can be invoked from other parts of the codebase using the `RBFLogSegmenter` class by instantiating it and calling either the `segment` method or the call-operator on the object, e.g. as
+***REMOVED***python
+segmenter = cut.RBFLogSegmenter(sigma=10., lambd=0.1, resolution=100)
+# let images be a (batch_size, W, H) numpy-array of either np.float32 or np.float64
+images = segmenter(images)
+***REMOVED***
+Similarly, the directional segmenter (that was only used in some initial experiments), can be used e.g. as
+***REMOVED***python
+segmenter = cut.DirectionSegmenter(lambda_pred=1, lambda_dir=2000, radius=20, delta_theta=math.pi / 16)
+# let images be a (batch_size, W, H) numpy-array of np.int32
+images = segmenter(images)
+***REMOVED***
+Note that the underlying library is only built for specific input types, namely 32- or 64-bit floating point for `RBFLogSegmenter` and 32-bit unsigned integers for `DirectionSegmenter`.
+
+In order to run a search for segmentation parameters on a given set of predictions and groundtruths, copy both the predictions and the groundtruths into files `predictions.npy` and `groundtruths.npy` into a directory.
+Then, set the key PREDICTIONS\_BASE\_DIR as the name of that directory in the config-file and run `cut.py`.
+
 
 ## Reproduce our results
 Please make sure that before running the code you install all relevant python requirements. They can be found in our [requirements.txt](requirements.txt)
@@ -55,10 +78,10 @@ The following list shows the different configuration files used to reproduce the
 
 SegFormer:
 
-- Standard Training - configs/segformer_standard.yaml
-- Augmented - configs/segformer_augementation.yaml
-- Extra Data - configs/segformer_extra_data.yaml
-- Fine-Tune - configs/segformer_fine_tune.yaml
+- Standard Training - configs/segformer\_standard.yaml
+- Augmented - configs/segformer\_augementation.yaml
+- Extra Data - configs/segformer\_extra\_data.yaml
+- Fine-Tune - configs/segformer\_fine\_tune.yaml
   - Please note that for the fine tuning case we first need to train the model on the extra data and then you need to **manually change*** the config file such that the correct model checkpoint is loaded. 
 
 
