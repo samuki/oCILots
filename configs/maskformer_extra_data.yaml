@@ -1,11 +1,11 @@
-TRAIN_PATH: 'data/training'
+TRAIN_PATH: 'data/trainingBig'
 VAL_PATH: 'data/validation'
 TEST_PATH: 'data/test/images'
 
 
 PATCH_SIZE: 16  # pixels per side of square patches
 VAL_SIZE: 10  # size of the validation set (number of images)
-CUTOFF: 0.35  # minimum average brightness for a mask patch to be classified as containing road
+CUTOFF: 0.25  # minimum average brightness for a mask patch to be classified as containing road
 BATCH_SIZE: 4
 HEIGHT: 400
 WIDTH: 400
@@ -26,7 +26,7 @@ USE_AUGMENTATION: True
 USE_NORMALIZATION: True
 
 # when using the augmented Dataset we need to specify the probability to apply augmentations to an image
-p_augment: 0.25
+p_augment: 0.5
 
 
 ###################################################### MODEL & TRAINING ######################################################
@@ -37,10 +37,9 @@ RANDOM_SEED: 42
 
 MODEL: MaskformerPretrained().to(config.DEVICE)
 
-
 # load ckpt to fine-tune
-LOAD_CKTP: True
-CKPT_PATH: "results/29072022_01:04:52"
+LOAD_CKTP: False
+CKPT_PATH: ""
 
 EPOCHS: 100
 
@@ -48,8 +47,9 @@ LOSS: torch.nn.BCELoss()
 
 
 # optimizer 
-OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters())
-
+OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters(), lr=0.001)
+#OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
+#OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
 
 # custom learning rate scheduler
 use_custom_lr_scheduler: False
