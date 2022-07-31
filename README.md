@@ -1,10 +1,10 @@
-# oCILots
+# Team oCILots
+***REMOVED***
+***REMOVED***
+***REMOVED***
+***REMOVED***
 
-<p align="left">
-  <img src="notebooks/ocilot.png" width="350" alt="">
-</p>
-
-
+# Instruction to run the project code
 
 ## Collecting additional training data
 
@@ -48,3 +48,32 @@ The trained mode, a submission csv and a log file will then be stored in a new f
 
 **Please note:**
 *Some of the experiments require you to load a pretrained model. For example the fine tune experiments are done by first training the model on the extra data. If you want to reproduce the entire experiment you need to change the checkpoint directory in the configuration file to point to the model trained on the extra data. Which experiments are affected is shown in the table below. Moreover, we added a comment to the relevant line in te configuration file*. 
+
+### List of Experiments
+The following list shows the different configuration files used to reproduce the experiments. Please note that the metrics shown in the report table are not the final training results but the best results obtained during training. For the outputs please see the logs.txt created during training. 
+
+
+SegFormer:
+
+- Standard Training - configs/segformer_standard.yaml
+- Augmented - configs/segformer_augementation.yaml
+- Extra Data - configs/segformer_extra_data.yaml
+- Fine-Tune - configs/segformer_fine_tune.yaml
+  - Please note that for the fine tuning case we first need to train the model on the extra data and then you need to **manually change*** the config file such that the correct model checkpoint is loaded. 
+
+
+### Majority Voting
+To run the results of our final submission you need to train the following models and then apply the [majority voting script](majority_voting.py) on the output data. *(For instructions on how to run the specific models please check the description above)*
+1. SegFormer Augmented Data 
+2. SegFormer Fine Tune
+3. 
+4. 
+
+To run the majority voting script you need to provide the different csv files from the different model runs to the script. You can do that by passing the different files obtained during training to the script. The files can be found in the corresponding training folder in the results directory. The majority voting scripts create a majority_voting_result.csv file which is the final file we submitted to the Kaggle competition. 
+
+Example on how to run the majority_voting.py script. 
+***REMOVED***
+python3 majority_voting.py -i unet_1.csv unet_2.csv segformer_augmented.csv segformer_finetuned.csv 
+***REMOVED***
+
+

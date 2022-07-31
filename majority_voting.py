@@ -65,8 +65,8 @@ def perform_majority_voting(files):
         points = []
         for item in data:
             points.append(int(item[key]))
-        
-        if sum(points) >= 2:
+        prev = base_data[key]
+        if sum(points) >= 3:
             base_data[key] = 1
         else:
             base_data[key] = 0
@@ -77,7 +77,7 @@ def perform_majority_voting(files):
 
 if __name__ == "__main__": 
 
-    parser = argparse.ArgumentParser(description="Please provide submission csv on which to perform majority voting",
+    parser = argparse.ArgumentParser(description="Please provide submission csvs on which to perform majority voting",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-i", nargs='*', required=True)
@@ -86,6 +86,5 @@ if __name__ == "__main__":
     result =   perform_majority_voting(args.i)
 
     with open("majority_voting_result.csv", "w") as f:
-        f.write("id,prediction\n")
         for key in result.keys():
             f.write(key + "," + str(result[key]) + "\n")
