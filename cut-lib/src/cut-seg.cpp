@@ -12,7 +12,6 @@ int batch_segment(
         const unsigned* in_strides,
         std::byte* out_data,
         const unsigned* out_strides) {
-    // std::cout << "Segmenting using " << segmenter->name() << '\n';
     const NDArray<InPixel> in_image{in_data, dims, shape, in_strides};
     NDArray<OutPixel> out_image{out_data, dims, shape, out_strides};
 
