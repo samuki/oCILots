@@ -42,15 +42,15 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # model
 #MODEL = UNet().to(DEVICE)
-MODEL = MaskformerPretrained().to(DEVICE)
+#  MODEL = MaskformerPretrained().to(DEVICE)
 #MODEL = SwinTransformerPretrained().to(DEVICE)
 #MODEL = MaskformerPretrained().to(DEVICE)
 #model = LRSRModel().to(DEVICE)
-#MODEL = SegFormerPretrained().to(DEVICE)
+MODEL = SegFormerPretrained().to(DEVICE)
 
 # load ckpt to fine-tune
-LOAD_CKTP=False
-CKPT_PATH="results/28072022_01:24:58/"
+LOAD_CKTP=True
+CKPT_PATH="good_models/christoffer"
 
 EPOCHS=100
 

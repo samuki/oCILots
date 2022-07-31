@@ -60,31 +60,52 @@ def main():
     n_epochs = config.EPOCHS
 
     if config.LOAD_CKTP:
-        model.load_state_dict(torch.load(config.CKPT_PATH+'/model.pth'))
+        print(f"loaded model from {config.CKPT_PATH + '/model.pth'}")
+        model.load_state_dict(torch.load(config.CKPT_PATH + "/model.pth"))
         model.eval()
 
+    #  train(
+    #      train_dataloader,
+    #      val_dataloader,
+    #      model,
+    #      loss_fn,
+    #      metric_fns,
+    #      optimizer,
+    #      n_epochs,
+    #      save_dir=dt_string,
+    #  )
 
-    train(
-        train_dataloader,
-        val_dataloader,
-        model,
-        loss_fn,
-        metric_fns,
-        optimizer,
-        n_epochs,
-        save_dir=dt_string,
-    )
-    
+    import os
+    base_dir = "results/christoffer"
+    del train_dataloader, val_dataloader
+    for dset, dname in [(train_dataset, "training"), (val_dataset, "validation")]:
+        dloader = torch.utils.data.DataLoader(dset, batch_size=1, shuffle=False)
+        os.makedirs(f"{base_dir}/{dname}")
+        for i, (im, gt) in enumerate(dloader):
+            pred = model(im).detach().squeeze().cpu().numpy()
+            gt = gt.squeeze().cpu().numpy()
+            np.save(f"{base_dir}/{dname}/pred_{i}.npy", pred)
+            np.save(f"{base_dir}/{dname}/gt_{i}.npy", gt)
+    del dset, dloader, train_dataset, val_dataset
+
     # load best model
-    model.load_state_dict(torch.load(dt_string+'/model.pth'))
-    model.eval()
+    #  model.load_state_dict(torch.load(dt_string + "/model.pth"))
+    #  model.eval()
 
     # load test dataset
     test_images, size, test_filenames = dataset.load_test_data()
+    import re
+    os.makedirs(f"{base_dir}/test")
+    for im, fname in zip(test_images, test_filenames):
+        nr = int(re.search("\d+", fname)[0])
+        pred = model(im.unsqueeze(0)).detach().squeeze().cpu().numpy()
+        np.save(f"{base_dir}/test/pred_{nr}.npy", pred)
 
     # create test predictions
-    test_pred, probabs = test.test_prediction(model, test_images, size, cutoff = config.CUTOFF)
-    np.save(dt_string+"/predictions", probabs)
+    test_pred, probabs = test.test_prediction(
+        model, test_images, size, cutoff=config.CUTOFF
+    )
+    np.save(dt_string + "/predictions", probabs)
     # create submision file
     utils.create_submission(
         test_pred, test_filenames, submission_filename=dt_string + "/submission.csv"

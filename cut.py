@@ -232,7 +232,7 @@ def validate_segmenters(
     for i, segmenter in enumerate(segmenters):
         print(
             f"{i+1:{len(str(n_segmenters))}d}/{n_segmenters}: {segmenter!s} ... ",
-            end="\n",
+            end="",
         )
         sys.stdout.flush()
         start = time.perf_counter()
@@ -265,23 +265,75 @@ def validate_segmenters(
     return best
 
 
+def print_all_metrics() -> None:
+    base_dir = "results/christoffer"
+    segmenter = RBFLogSegmenter(sigma=10.0, lambd=0.1, resolution=100)
+    train_pred = np.load(f"{base_dir}/training/predictions.npy")
+    train_gt = torch.Tensor(np.load(f"{base_dir}/training/groundtruths.npy"))
+    train_seg = torch.Tensor(segmenter(train_pred).astype("float64"))
+
+    val_pred = np.load(f"{base_dir}/validation/predictions.npy")
+    val_gt = torch.Tensor(np.load(f"{base_dir}/validation/groundtruths.npy"))
+    val_seg = torch.Tensor(segmenter(val_pred).astype("float64"))
+
+    train_rounded = torch.Tensor(np.round(train_pred))
+    val_rounded = torch.Tensor(np.round(val_pred))
+    print(
+        f"\nrounded:\n"
+        f"\ttraining:   patch acc {utils.patch_accuracy_fn(train_gt, train_rounded)}\n"
+        f"\t            patch f1  {utils.patch_f1_fn(train_gt, train_rounded)}\n"
+        f"\tvalidation: patch acc {utils.patch_accuracy_fn(val_gt, val_rounded)}\n"
+        f"\t            patch f1  {utils.patch_f1_fn(val_gt, val_rounded)}"
+    )
+
+    print(
+        f"{segmenter!s}:\n"
+        f"\ttraining:   patch acc {utils.patch_accuracy_fn(train_gt, train_seg)}\n"
+        f"\t            patch f1  {utils.patch_f1_fn(train_gt, train_seg)}\n"
+        f"\tvalidation: patch acc {utils.patch_accuracy_fn(val_gt, val_seg)}\n"
+        f"\t            patch f1  {utils.patch_f1_fn(val_gt, val_seg)}"
+    )
+
+
+def do_visualize():
+    base_dir = "results/christoffer"
+    segmenter = RBFLogSegmenter(sigma=10.0, lambd=0.05, resolution=100)
+    train_pred = np.load(f"{base_dir}/training/predictions.npy")
+    train_gt = np.load(f"{base_dir}/training/groundtruths.npy")
+    train_seg = segmenter(train_pred)
+
+    val_pred = np.load(f"{base_dir}/validation/predictions.npy")
+    val_gt = np.load(f"{base_dir}/validation/groundtruths.npy")
+    val_seg = segmenter(val_pred)
+
+    visualize(
+        Prediction=train_pred,
+        Rounded=np.round(train_pred),
+        Segmentation=train_seg,
+        Groundtruth=train_gt,
+    )
+
+
 def main() -> None:
-    base_dir = "results/predictions"
+    base_dir = "results/christoffer/validation"
     predictions = np.load(f"{base_dir}/predictions.npy")
     groundtruths = np.load(f"{base_dir}/groundtruths.npy")
     segmenters = [
-        RBFLogSegmenter(sigma=0.1, lambd=lambd, resolution=100)
-        for lambd in np.arange(start=0.1, stop=0.7, step=0.01)
+        RBFLogSegmenter(sigma=sigma, lambd=lambd, resolution=100)
+        for sigma in (0.1, 1.0, 10.0)
+        for lambd in np.arange(start=0.05, stop=0.7, step=0.05)
     ]
     validate_segmenters(
         segmenters,
         predictions,
         groundtruths,
         {**config.METRICS, "f1": utils.f1_fn},
-        rank_metric="f1",
+        rank_metric="patch_f1_fn",
         print_sorted=True,
     )
 
 
 if __name__ == "__main__":
     main()
+    #  print_all_metrics()
+    #  do_visualize()
