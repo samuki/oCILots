@@ -26,7 +26,7 @@ USE_AUGMENTATION: True
 USE_NORMALIZATION: True
 
 # when using the augmented Dataset we need to specify the probability to apply augmentations to an image
-p_augment: 0.5
+p_augment: 0.6
 
 
 ###################################################### MODEL & TRAINING ######################################################
@@ -42,9 +42,9 @@ MODEL: SegFormerPretrained().to(config.DEVICE)
 
 # load ckpt to fine-tune
 LOAD_CKTP: True
-CKPT_PATH: "results/28072022_17:51:49"
+CKPT_PATH: "results/31072022_08:10:54"
 
-EPOCHS: 1
+EPOCHS: 50
  
 LOSS: torch.nn.MSELoss()
 
@@ -52,7 +52,7 @@ LOSS: torch.nn.MSELoss()
 # optimizer 
 OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters())
 #OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
-#OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
+#OPTIMIZER: torch.optim.SGD(config.MODEL.parameters(), lr=0.1, momentum=0.9)
 
 # custom learning rate scheduler
 use_custom_lr_scheduler: False

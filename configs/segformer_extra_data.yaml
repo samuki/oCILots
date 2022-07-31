@@ -43,15 +43,15 @@ MODEL: SegFormerPretrained().to(config.DEVICE)
 
 # load ckpt to fine-tune
 LOAD_CKTP: False
-#CKPT_PATH: "results/28072022_17:51:49"
+#CKPT_PATH: "results/31072022_08:10:54"
 
-EPOCHS: 150
+EPOCHS: 100
  
-LOSS: torch.nn.MSELoss()
+LOSS: torch.nn.BCELoss()
 
 
 # optimizer 
-OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters())
+OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters(), lr=0.00006)
 #OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
 #OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
 
@@ -61,5 +61,5 @@ start_lr: 0.0001
 warm_up_epochs: 0
 
 # save best model, choose option in ['val_loss', 'val_acc', 'val_patch_acc, val_f1_patch_acc']
-save_best_metric: 'val_f1_patch_acc'
-minimize_metric: False
+save_best_metric: 'val_loss'
+minimize_metric: True
