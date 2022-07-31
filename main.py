@@ -83,8 +83,8 @@ def main():
     test_images, size, test_filenames = dataset.load_test_data()
 
     # create test predictions
-    test_pred = test.test_prediction(model, test_images, size, cutoff = config.CUTOFF)
-    
+    test_pred, probabs = test.test_prediction(model, test_images, size, cutoff = config.CUTOFF)
+    np.save(dt_string+"/predictions", probabs)
     # create submision file
     utils.create_submission(
         test_pred, test_filenames, submission_filename=dt_string + "/submission.csv"

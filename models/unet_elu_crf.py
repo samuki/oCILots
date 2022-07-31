@@ -66,7 +66,7 @@ class Conv2dBnAct(nn.Module):
         kernel_size,
         padding=0,
         stride=1,
-        act_layer=nn.ReLU,
+        act_layer=nn.ELU,
         norm_layer=nn.BatchNorm2d,
     ):
         super().__init__()
@@ -94,7 +94,7 @@ class DecoderBlock(nn.Module):
         in_channels,
         out_channels,
         scale_factor=2.0,
-        act_layer=nn.ReLU,
+        act_layer=nn.ELU,
         norm_layer=nn.BatchNorm2d,
     ):
         super().__init__()
