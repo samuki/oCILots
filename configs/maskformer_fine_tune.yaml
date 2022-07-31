@@ -5,7 +5,7 @@ TEST_PATH: 'data/test/images'
 
 PATCH_SIZE: 16  # pixels per side of square patches
 VAL_SIZE: 10  # size of the validation set (number of images)
-CUTOFF: 0.25  # minimum average brightness for a mask patch to be classified as containing road
+CUTOFF: 0.35  # minimum average brightness for a mask patch to be classified as containing road
 BATCH_SIZE: 4
 HEIGHT: 400
 WIDTH: 400
@@ -26,7 +26,7 @@ USE_AUGMENTATION: True
 USE_NORMALIZATION: True
 
 # when using the augmented Dataset we need to specify the probability to apply augmentations to an image
-p_augment: 0.5
+p_augment: 0.25
 
 
 ###################################################### MODEL & TRAINING ######################################################
@@ -34,11 +34,9 @@ p_augment: 0.5
 RANDOM_SEED: 42
 
 # model
-#MODEL: UNet().to(config.DEVICE)
-#MODEL = SwinTransformerPretrained().to(DEVICE)
+
 MODEL: MaskformerPretrained().to(config.DEVICE)
-#model = LRSRModel().to(DEVICE)
-#MODEL = SegFormerPretrained().to(DEVICE)
+
 
 # load ckpt to fine-tune
 LOAD_CKTP: True
@@ -51,8 +49,7 @@ LOSS: torch.nn.BCELoss()
 
 # optimizer 
 OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters())
-#OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
-#OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
+
 
 # custom learning rate scheduler
 use_custom_lr_scheduler: False

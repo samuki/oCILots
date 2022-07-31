@@ -1,4 +1,4 @@
-TRAIN_PATH: 'data/trainingBig'
+TRAIN_PATH: 'data/training'
 VAL_PATH: 'data/validation'
 TEST_PATH: 'data/test/images'
 
@@ -7,8 +7,8 @@ PATCH_SIZE: 16  # pixels per side of square patches
 VAL_SIZE: 10  # size of the validation set (number of images)
 CUTOFF: 0.25  # minimum average brightness for a mask patch to be classified as containing road
 BATCH_SIZE: 4
-HEIGHT: 400
-WIDTH: 400
+HEIGHT: 384
+WIDTH: 384
 MINHEIGHT: 384
 MINWIDTH: 384
 
@@ -20,14 +20,13 @@ GRAD_ACCUM: 1
 
 
 # Define whether input data should be augmented or not
-# to enable cropping we set augmentation=True but p_augment=0√
 USE_AUGMENTATION: True
 
 # define whether the data should be normalized or not
 USE_NORMALIZATION: True
 
 # when using the augmented Dataset we need to specify the probability to apply augmentations to an image
-p_augment: 0.6
+p_augment: 0.25
 
 
 ###################################################### MODEL & TRAINING ######################################################
@@ -35,31 +34,26 @@ p_augment: 0.6
 RANDOM_SEED: 42
 
 # model
-#MODEL: UNet().to(config.DEVICE)
-#MODEL = SwinTransformerPretrained().to(DEVICE)
-#MODEL: MaskformerPretrained().to(config.DEVICE)
-#model = LRSRModel().to(DEVICE)
-MODEL: SegFormerPretrained().to(config.DEVICE)
+MODEL: UNetBase().to(config.DEVICE)
 
 # load ckpt to fine-tune
 LOAD_CKTP: False
-#CKPT_PATH: "results/31072022_08:10:54"
+CKPT_PATH: ""
 
 EPOCHS: 100
- 
+
 LOSS: torch.nn.BCELoss()
 
 
 # optimizer 
-OPTIMIZER:  torch.optim.AdamW(config.MODEL.parameters(), lr=0.00006)
-#OPTIMIZER: torch.optim.Adam(config.MODEL.parameters())
-#OPTIMIZER = torch.optim.SGD(MODEL.parameters(), lr=0.01, momentum=0.9)
+OPTIMIZER: torch.optim.AdamW(config.MODEL.parameters(), lr=0.001)
+
 
 # custom learning rate scheduler
 use_custom_lr_scheduler: False
-start_lr: 0.0001
+start_lr: 0.3
 warm_up_epochs: 0
 
-# save best model, choose option in ['val_loss', 'val_acc', 'val_patch_acc, val_f1_patch_acc']
-save_best_metric: 'val_loss'
-minimize_metric: True
+# save best model, choose option in ['val_loss', 'val_acc', 'val_patch_acc']
+save_best_metric: 'val_f1_patch_acc'
+minimize_metric: False
