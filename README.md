@@ -61,13 +61,31 @@ SegFormer:
 - Fine-Tune - configs/segformer_fine_tune.yaml
   - Please note that for the fine tuning case we first need to train the model on the extra data and then you need to **manually change*** the config file such that the correct model checkpoint is loaded. 
 
+Maskformer:
+
+- Standard Training - configs/maskformer_standard.yaml
+- Augmented - configs/maskformer_augementation.yaml
+- Extra Data - configs/maskformer_extra_data.yaml
+- Fine-Tune - configs/maskformer_fine_tune.yaml
+  - Please note that for the fine tuning case we first need to train the model on the extra data and then you need to **manually change*** the config file such that the correct model checkpoint is loaded. 
+
+Unet:
+
+- Standard Training - configs/unet_standard.yaml (example architecture from notebook)
+- Backbone - configs/unet_backbone.yaml (example architecture from notebook)
+- Augmented - configs/unet_augment.yaml
+- Extra Data - configs/unet_extra_data.yaml
+- Fine-Tune - configs/unet_fine_tune.yaml
+  - Please note that for the fine tuning case we first need to train the model on the extra data and then you need to **manually change*** the config file such that the correct model checkpoint is loaded. 
+  - We have added an additional config files to use a seperate seed. They are named _2 in the configs folder
+
 
 ### Majority Voting
 To run the results of our final submission you need to train the following models and then apply the [majority voting script](majority_voting.py) to the output data. *(For instructions on how to run the specific models please check the description above)*
 1. SegFormer Augmented Data 
 2. SegFormer Fine Tune
-3. 
-4. 
+3. Unet Fine Tune
+4. Unet Fine Tune 2 (use configs with _2 in the name to use a different seed)
 
 To run the majority voting script you need to provide the different csv files from the different model runs to the script. You can do that by passing the different files obtained during training to the script. The files can be found in the corresponding training folder in the results directory. The majority voting scripts create a majority_voting_result.csv file which is the final file we submitted to the Kaggle competition. 
 
