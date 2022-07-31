@@ -6,13 +6,7 @@ import torch.nn.functional as F
 from timm import create_model
 from typing import Optional, List
 
-
-""" 
-This is a modfied version from the Unet Model using the TIMM library.
-For reference please see the following link: 
-    https://gist.github.com/rwightman/f8b24f4e6f5504aba03e999e02460d31
-
-"""
+# adopted from https://gist.github.com/rwightman/f8b24f4e6f5504aba03e999e02460d31
 
 
 class UNet(nn.Module):
@@ -72,7 +66,7 @@ class Conv2dBnAct(nn.Module):
         kernel_size,
         padding=0,
         stride=1,
-        act_layer=nn.ReLU,
+        act_layer=nn.ELU,
         norm_layer=nn.BatchNorm2d,
     ):
         super().__init__()
@@ -100,7 +94,7 @@ class DecoderBlock(nn.Module):
         in_channels,
         out_channels,
         scale_factor=2.0,
-        act_layer=nn.ReLU,
+        act_layer=nn.ELU,
         norm_layer=nn.BatchNorm2d,
     ):
         super().__init__()
@@ -163,6 +157,7 @@ class UnetDecoder(nn.Module):
         )
 
         self.activation = torch.nn.Sigmoid()
+
 
         self._init_weight()
 
