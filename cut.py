@@ -76,7 +76,7 @@ class RBFLogSegmenter(Segmenter):
 class DirectionSegmenter(Segmenter):
     lambda_pred: int
     lambda_dir: int
-    radsiu: int
+    radius: int
     delta_theta: float
 
     def __init__(
