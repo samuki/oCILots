@@ -6,6 +6,7 @@ from models.unet_new import UNet
 import utils
 import torch
 from models.LRSR import LRSRModel
+from models.unet import UNet as UNetBase
 from models.maskformer import MaskformerPretrained
 
 class dotdict(dict):
