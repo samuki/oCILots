@@ -8,9 +8,6 @@ import glob
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 import torch
-import config
-import dataset
-import utils
 
 
 LIB = ctypes.CDLL("./cut-lib/include/cut-seg.so")
@@ -183,22 +180,6 @@ def visualize(
         plt.show()
     if save is not None:
         fig.savefig(save)
-
-
-def make_submission(test_pred: np.ndarray, cutoff: float, filename: str) -> None:
-    _, size, test_filenames = dataset.load_test_data()
-    test_pred = test_pred.reshape(
-        (
-            -1,
-            size[0] // config.PATCH_SIZE,
-            config.PATCH_SIZE,
-            size[1] // config.PATCH_SIZE,
-            config.PATCH_SIZE,
-        )
-    )
-    test_pred = np.moveaxis(test_pred, 2, 3)
-    test_pred = np.round(np.mean(test_pred, (-1, -2)) > cutoff)
-    utils.create_submission(test_pred, test_filenames, filename)
 
 
 def load_prediction_groundtruth(base_dir: str) -> tuple[np.ndarray, np.ndarray]:
