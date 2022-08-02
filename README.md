@@ -13,23 +13,18 @@ The python script collect\_data.py in  [additional-data/](additional-data) has b
 To run the script you need to add a Google maps api key in the  placeholder section "PLACE YOUR GOOGLE API KEY HERE" in collect\_data.py. 
 To run the code you need to run the following commands. 
 
-***REMOVED***
+```
 cd additional-data
 python3 collect_data.py
-***REMOVED***
-The script is fetching data from cities defined in input\_cities.csv. The file can also be found in the additional-data/ folder. 
-
-
-***REMOVED*** 
+```
+The script is fetching data from cities defined in input\_cities.csv. The file can also be found in the additional-data/ folder.
 
 ## Data setup for training
-To run the scripts defined in the next section and reproduce our results you need to have the same training data available + validation/test split. ***REMOVED***
-***REMOVED***
+To run the scripts defined in the next section and reproduce our results you need to have the same training data available. In addition to obtaining the additional data as described above you can download the original challenge data on kaggle:
+https://www.kaggle.com/competitions/cil-road-segmentation-2022 
+Note that you need to be a participant of the challenge to get access to the data.
+All folders downloaded from Polybox need to be placed in a new folder called data/. 
 
-***REMOVED***
-***REMOVED***
-***REMOVED***
-***REMOVED***
 
 ## Segmentation Library
 Due to performance issues with most python graph libraries, the underlying code to perform the minimum-cut-based segmentation was implemented in C++ using the Boost Graph Library.
@@ -37,17 +32,17 @@ The corresponding code and Makefile is located in the cut-lib directory.
 In order to build a shared object that can be called from the python wrapper, run `make` in this directory.
 Note that building the code requires a C++-compiler with support for C++-20 and Boost for the Boost Graph Library (we used g++ 11.3.0 and Boost 1.79.0-1).
 The segmentations can be invoked from other parts of the codebase using the `RBFLogSegmenter` class by instantiating it and calling either the `segment` method or the call-operator on the object, e.g. as
-***REMOVED***python
+```python
 segmenter = cut.RBFLogSegmenter(sigma=10., lambd=0.1, resolution=100)
 # let images be a (batch_size, W, H) numpy-array of either np.float32 or np.float64
 images = segmenter(images)
-***REMOVED***
+```
 Similarly, the directional segmenter (that was only used in some initial experiments), can be used e.g. as
-***REMOVED***python
+```python
 segmenter = cut.DirectionSegmenter(lambda_pred=1, lambda_dir=2000, radius=20, delta_theta=math.pi / 16)
 # let images be a (batch_size, W, H) numpy-array of np.int32
 images = segmenter(images)
-***REMOVED***
+```
 Note that the underlying library is only built for specific input types, namely 32- or 64-bit floating point for `RBFLogSegmenter` and 32-bit unsigned integers for `DirectionSegmenter`.
 
 In order to run a search for segmentation parameters on a given set of predictions and groundtruths, copy both the predictions and the groundtruths into files `predictions.npy` and `groundtruths.npy` into a directory.
@@ -63,9 +58,9 @@ We have defined a wide set of configuration files which can be found in the fold
 **Please note that some of the code needs to be run with a GPU.**
 
 Reproducing the results with the configuration files can be done by passing the relevant configuration file to the main.py. You can for example reproduce the Segformer with augmentation data test with the following command. 
-***REMOVED***
+```
 python3 main.py --config configs/segformer_augmentation.yaml
-***REMOVED***
+```
 The trained model, a submission csv and a log file will then be stored in a new folder in the directory [results](results/). The folder name is the timestamp when you started the experiment. 
 
 
@@ -113,8 +108,8 @@ To run the results of our final submission you need to train the following model
 To run the majority voting script you need to provide the different csv files from the different model runs to the script. You can do that by passing the different files obtained during training to the script. The files can be found in the corresponding training folder in the results directory. The majority voting scripts create a majority_voting_result.csv file which is the final file we submitted to the Kaggle competition. 
 
 Example of how to run the majority_voting.py script. 
-***REMOVED***
+```
 python3 majority_voting.py -i unet_1.csv unet_2.csv segformer_augmented.csv segformer_finetuned.csv 
-***REMOVED***
+```
 
 
