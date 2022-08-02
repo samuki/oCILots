@@ -1,8 +1,12 @@
-# Team oCILots
+<img align="left" src="images/ocilot.png" width="250" alt="">
+
+# CIL Road Segmentation - Team oCILots
 ***REMOVED***
 ***REMOVED***
 ***REMOVED***
 ***REMOVED***
+<br clear="left"/>
+
 
 # Instruction to run the project code
 
@@ -111,5 +115,15 @@ Example of how to run the majority_voting.py script.
 ```
 python3 majority_voting.py -i unet_1.csv unet_2.csv segformer_augmented.csv segformer_finetuned.csv 
 ```
+
+## Example Segmentations results
+Segmentation results on challenging examples
+
+<img align="left" src="images/challenge1.png" width="550" alt="">  
+
+<img align="left" src="images/challenge2.png" width="550" alt="">  
+
+<img align="left" src="images/challenge3.png" width="550" alt="">  
+ 
 
 
