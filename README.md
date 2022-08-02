@@ -1,10 +1,7 @@
 <img align="left" src="images/ocilot.png" width="250" alt="">
 
-# CIL Road Segmentation - Team oCILots
-***REMOVED***
-***REMOVED***
-***REMOVED***
-***REMOVED***
+# CIL Road Segmentation  
+# Team oCILots
 <br clear="left"/>
 
 
