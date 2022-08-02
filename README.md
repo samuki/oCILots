@@ -20,10 +20,10 @@ python3 collect_data.py
 The script is fetching data from cities defined in input\_cities.csv. The file can also be found in the additional-data/ folder.
 
 ## Data setup for training
-To run the scripts defined in the next section and reproduce our results you need to have the same training data available. In addition to obtaining the additional data as described above you can download the original challenge data on kaggle:
-https://www.kaggle.com/competitions/cil-road-segmentation-2022 
-Note that you need to be a participant of the challenge to get access to the data.
-All folders downloaded from Polybox need to be placed in a new folder called data/. 
+To run the scripts defined in the next section and reproduce our results, you need to have the same training data available. In addition to obtaining the additional data as described above, you can download the original challenge data on kaggle:
+https://www.kaggle.com/competitions/cil-road-segmentation-2022.
+Note that you need to participate in the challenge to access the data.
+All folders need to be placed in a new folder called data/. 
 
 
 ## Segmentation Library
@@ -90,8 +90,8 @@ Maskformer:
 Unet:
 
 - Standard Training - configs/unet_standard.yaml (example architecture from notebook)
-- Backbone - configs/unet_backbone.yaml (example architecture from notebook)
-- Augmented - configs/unet_augment.yaml
+- Augmented - configs/unet_augment.yaml  (example architecture from notebook)
+- Backbone - configs/unet_backbone.yaml
 - Extra Data - configs/unet_extra_data.yaml
 - Fine-Tune - configs/unet_fine_tune.yaml
   - Please note that for the fine tuning case we first need to train the model on the extra data and then you need to **manually change*** the config file such that the correct model checkpoint is loaded. 
